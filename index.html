@@ -22,6 +22,9 @@
         .thumbnail img, .thumbnail video { width: 100%; height: 100%; object-fit: cover;}
         .thumbnail .remove-btn { position: absolute; top: 4px; right: 4px; background-color: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.2s;}
         .thumbnail:hover .remove-btn { opacity: 1;}
+        .progress-container { width: 100%; background-color: #374151; height: 0.5rem; border-radius: 0.25rem; overflow: hidden; margin-top: 0.5rem; }
+        .progress-bar { height: 100%; background-color: #3b82f6; width: 0%; transition: width 0.3s; }
+        .drag-highlight { border: 2px dashed #3b82f6; }
     </style>
 </head>
 <body class="bg-gray-900 text-white antialiased">
@@ -105,12 +108,15 @@
                          <p class="text-gray-500 text-center">No human feedback rules saved yet.</p>
                      </div>
                  </div>
-                 <div class="flex-grow flex flex-col min-h-0">
-                     <h3 class="text-xl font-semibold mb-3 text-purple-400">Review History</h3>
-                     <div id="review-history-list" class="flex-grow bg-gray-900/50 rounded-lg p-4 space-y-2 overflow-y-auto no-scrollbar">
-                         <p class="text-gray-500 text-center">No past reviews found.</p>
-                     </div>
-                 </div>
+                <div class="flex-grow flex flex-col min-h-0">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-semibold text-purple-400">Review History</h3>
+                        <input id="history-search" type="text" placeholder="Search" class="p-1 bg-gray-700 border border-gray-600 rounded-lg text-sm" aria-label="Search review history" />
+                    </div>
+                    <div id="review-history-list" class="flex-grow bg-gray-900/50 rounded-lg p-4 space-y-2 overflow-y-auto no-scrollbar">
+                        <p class="text-gray-500 text-center">No past reviews found.</p>
+                    </div>
+                </div>
              </div>
         </div>
     </div>
@@ -148,6 +154,7 @@
     const saveFeedbackButton = document.getElementById('save-feedback-button');
     const activeFeedbackList = document.getElementById('active-feedback-list');
     const reviewHistoryList = document.getElementById('review-history-list');
+    const historySearchInput = document.getElementById('history-search');
     // API KEY UI
     const apiKeyInput = document.getElementById('api-key-input');
     const saveApiKeyBtn = document.getElementById('save-api-key-btn');
@@ -155,6 +162,7 @@
 
     let assetsToReview = [];
     let referenceAssets = [];
+    let historyData = [];
 
     // --- Firebase Feedback & History ---
     async function saveFeedbackToFirebase(feedbackText) {
@@ -243,8 +251,11 @@
     });
 
     // --- REVIEW HISTORY UI ---
-    async function renderHistoryList() {
-        const historyList = await getHistoryFromFirebase();
+    async function renderHistoryList(filter = '') {
+        if (historyData.length === 0) {
+            historyData = await getHistoryFromFirebase();
+        }
+        const historyList = filter ? historyData.filter(item => (item.assetName && item.assetName.toLowerCase().includes(filter.toLowerCase())) || (item.verdict && item.verdict.toLowerCase().includes(filter.toLowerCase()))) : historyData;
         reviewHistoryList.innerHTML = '';
         if (historyList.length === 0) {
             reviewHistoryList.innerHTML = `<p class="text-gray-500 text-center text-sm">No past reviews found.</p>`;
@@ -288,6 +299,17 @@
         });
         renderPreviews(fileList, previewContainer, placeholder);
         event.target.value = '';
+    }
+
+    function handleDropUpload(event, fileList, previewContainer, placeholder) {
+        event.preventDefault();
+        const files = Array.from(event.dataTransfer.files);
+        files.forEach(file => {
+            if (!fileList.some(f => f.name === file.name)) {
+                fileList.push(file);
+            }
+        });
+        renderPreviews(fileList, previewContainer, placeholder);
     }
     function renderPreviews(fileList, previewContainer, placeholder) {
         previewContainer.innerHTML = '';
@@ -337,11 +359,13 @@
         const loader = document.createElement('div');
         loader.id = 'loader';
         loader.className = 'h-full flex flex-col items-center justify-center text-center text-gray-500 py-16';
-        loader.innerHTML = `<div class="spinner"></div><p id="loader-text" class="mt-4">Preparing analysis...</p>`;
+        loader.innerHTML = `<div class="spinner"></div><p id="loader-text" class="mt-4">Preparing analysis...</p><div class="progress-container"><div id="progress-bar" class="progress-bar"></div></div>`;
         analysisOutput.appendChild(loader);
         let completedCount = 0;
         const totalCount = assetsToReview.length;
         const loaderText = document.getElementById('loader-text');
+        const progressBar = document.getElementById('progress-bar');
+        progressBar.style.width = '0%';
         try {
             const referenceParts = await Promise.all(referenceAssets.map(file => getAssetPayloadPart(file)));
             for (const asset of assetsToReview) {
@@ -363,6 +387,8 @@
                     appendReportToDisplay({ assetName: asset.name, reportData: { error: true, summary: assetError.message } });
                 } finally {
                     completedCount++;
+                    const progress = Math.round((completedCount / totalCount) * 100);
+                    progressBar.style.width = `${progress}%`;
                 }
             }
             humanFeedbackSection.classList.remove('hidden');
@@ -557,9 +583,16 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
     document.addEventListener('DOMContentLoaded', async () => {
         await renderFeedbackList();
         await renderHistoryList();
+        historySearchInput.addEventListener('input', (e) => renderHistoryList(e.target.value.trim()));
     });
     assetUpload.addEventListener('change', (e) => handleFileUpload(e, assetsToReview, assetPreviews, assetPlaceholder));
     referenceAssetUpload.addEventListener('change', (e) => handleFileUpload(e, referenceAssets, referencePreviews, referencePlaceholder));
+    assetPreviews.addEventListener('dragover', (e) => { e.preventDefault(); assetPreviews.classList.add('drag-highlight'); });
+    assetPreviews.addEventListener('dragleave', () => assetPreviews.classList.remove('drag-highlight'));
+    assetPreviews.addEventListener('drop', (e) => { assetPreviews.classList.remove('drag-highlight'); handleDropUpload(e, assetsToReview, assetPreviews, assetPlaceholder); });
+    referencePreviews.addEventListener('dragover', (e) => { e.preventDefault(); referencePreviews.classList.add('drag-highlight'); });
+    referencePreviews.addEventListener('dragleave', () => referencePreviews.classList.remove('drag-highlight'));
+    referencePreviews.addEventListener('drop', (e) => { referencePreviews.classList.remove('drag-highlight'); handleDropUpload(e, referenceAssets, referencePreviews, referencePlaceholder); });
     analyzeButton.addEventListener('click', handleBatchAnalysis);
 </script>
 </body>
