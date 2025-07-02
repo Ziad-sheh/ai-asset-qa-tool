@@ -6,12 +6,11 @@
     <title>AI-Powered Asset QA Tool</title>
     <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .spinner { border: 4px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top: 4px solid #3b82f6; width: 40px; height: 40px; animation: spin 1s linear infinite;}
+        .spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid #3b82f6; width: 40px; height: 40px; animation: spin 1s linear infinite;}
         @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
         #notification { transition: opacity 0.5s, transform 0.5s;}
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -20,34 +19,40 @@
         .thumbnail img, .thumbnail video { width: 100%; height: 100%; object-fit: cover;}
         .thumbnail .remove-btn { position: absolute; top: 4px; right: 4px; background-color: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.2s;}
         .thumbnail:hover .remove-btn { opacity: 1;}
-        /* Drag-over effect */
         .drag-over { border: 2px dashed #38bdf8 !important; background: #172554 !important;}
     </style>
 </head>
 <body class="bg-gray-900 text-white antialiased">
+
+    <!-- Notification Element -->
     <div id="notification" class="fixed top-5 right-5 bg-red-600 text-white py-2 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-[-20px] z-50">
         <p id="notification-message"></p>
     </div>
     <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <!-- Header -->
         <header class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-bold text-white">AI-Powered Asset QA Tool</h1>
             <p class="text-gray-400 mt-2">Analyze assets in batches, get confidence scores, and teach the AI with your feedback.</p>
         </header>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Inputs -->
             <div class="lg:col-span-2 bg-gray-800 p-6 rounded-xl shadow-2xl flex flex-col space-y-6">
+                <!-- Cloud Integration Buttons -->
                 <div class="flex space-x-4 mb-4">
                     <button onclick="window.open('https://drive.google.com/drive/my-drive','_blank')" class="bg-white text-gray-900 font-bold py-2 px-4 rounded-lg shadow hover:bg-gray-200">Import from Google Drive</button>
                     <button onclick="window.open('https://www.dropbox.com/home','_blank')" class="bg-white text-gray-900 font-bold py-2 px-4 rounded-lg shadow hover:bg-gray-200">Import from Dropbox</button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Assets to Check -->
                     <div id="asset-drop-area" class="transition-all">
                         <h3 class="text-xl font-semibold text-blue-400 mb-3">Assets to Check</h3>
                         <label for="asset-upload" class="w-full text-center cursor-pointer bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-all">1. Upload or Drag Assets</label>
                         <input type="file" id="asset-upload" accept="image/*,video/mp4" class="hidden" multiple/>
                         <div id="asset-previews" class="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 bg-gray-900/50 rounded-lg p-4 min-h-[120px]">
-                            <p id="asset-placeholder" class="text-gray-500 col-span-full text-center self-center">Assets to review will appear here. <br>Or just drag them here!</p>
+                            <p id="asset-placeholder" class="text-gray-500 col-span-full text-center self-center">Assets to review will appear here.<br>Or just drag them here!</p>
                         </div>
                     </div>
+                    <!-- Reference Materials -->
                     <div id="reference-drop-area" class="transition-all">
                         <h3 class="text-xl font-semibold text-green-400 mb-3">Reference Materials</h3>
                         <label for="reference-asset-upload" class="w-full text-center cursor-pointer bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg transition-all">2. Upload or Drag References</label>
@@ -65,10 +70,12 @@
                     <label for="reference-info-input" class="block text-lg font-semibold mb-2 text-gray-200">4. Additional Style Notes</label>
                     <textarea id="reference-info-input" rows="3" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 transition" placeholder="e.g., 'The overall tone should be more exciting.'"></textarea>
                 </div>
+                <!-- Analyze Button -->
                 <button id="analyze-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:bg-gray-500 disabled:cursor-not-allowed disabled:scale-100 mt-4">
                     Analyze Batch
                 </button>
             </div>
+            <!-- Right Column: Analysis & Feedback -->
             <div class="bg-gray-800 p-6 rounded-xl shadow-2xl flex flex-col space-y-6">
                 <div>
                     <h2 class="text-xl font-semibold mb-4 text-gray-200">AI Analysis & QA Report</h2>
@@ -79,6 +86,7 @@
                         </div>
                     </div>
                 </div>
+                <!-- Human Feedback Section (Learning Mode) -->
                 <div id="human-feedback-section" class="hidden">
                     <h3 class="text-xl font-semibold mb-3 text-yellow-400">Human Feedback Loop</h3>
                     <p class="text-sm text-gray-400 mb-3">Add a new rule for the AI to remember for all future analyses. This will override its default behavior.</p>
@@ -90,6 +98,7 @@
                         Add as Permanent QA Rule
                     </button>
                 </div>
+                <!-- Active Feedback & History -->
                 <div class="flex-grow flex flex-col min-h-0 space-y-4">
                     <div>
                         <h3 class="text-xl font-semibold mb-3 text-cyan-400">Active Human Feedback</h3>
@@ -108,13 +117,33 @@
         </div>
     </div>
 <script type="module">
-    // --- Your app's variables & functions (add the rest of your app code below!) ---
-    // DOM references (copy from your app's JS, not repeated here for brevity)
+    // --- App State & Elements ---
+    const assetUpload = document.getElementById('asset-upload');
+    const assetPreviews = document.getElementById('asset-previews');
+    const assetPlaceholder = document.getElementById('asset-placeholder');
+    const referenceAssetUpload = document.getElementById('reference-asset-upload');
+    const referencePreviews = document.getElementById('reference-previews');
+    const referencePlaceholder = document.getElementById('reference-placeholder');
+    const copyInput = document.getElementById('copy-input');
+    const referenceInfoInput = document.getElementById('reference-info-input');
+    const analyzeButton = document.getElementById('analyze-button');
+    const analysisOutput = document.getElementById('analysis-output');
+    const analysisPlaceholder = document.getElementById('analysis-placeholder');
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notification-message');
+    const humanFeedbackSection = document.getElementById('human-feedback-section');
+    const humanFeedbackInput = document.getElementById('human-feedback-input');
+    const saveFeedbackButton = document.getElementById('save-feedback-button');
+    const activeFeedbackList = document.getElementById('active-feedback-list');
+    const reviewHistoryList = document.getElementById('review-history-list');
+    const suggestRuleBtn = document.getElementById('suggest-rule-btn');
 
-    // (REQUIRED) Copy your whole JavaScript code for functionality here.
-    // To save you time, use the JavaScript code you already have, plus these key additions:
+    let assetsToReview = [];
+    let referenceAssets = [];
+    const feedbackStorageKey = 'aiAssetQA_humanFeedback';
+    const historyStorageKey = 'aiAssetQA_reviewHistory';
 
-    // --- Drag and Drop Utility ---
+    // --- Drag-and-drop Functions ---
     function setupDragAndDrop(dropArea, fileInput, fileList, renderFunc, placeholder) {
         dropArea.addEventListener('dragover', (e) => {
             e.preventDefault(); e.stopPropagation();
@@ -133,7 +162,158 @@
         });
     }
 
-    // --- Learning Mode Feedback Memory ---
+    // --- Render Previews ---
+    function renderPreviews(fileList, previewContainer, placeholder) {
+        previewContainer.innerHTML = '';
+        if (fileList.length === 0) {
+            previewContainer.appendChild(placeholder);
+            return;
+        }
+        fileList.forEach((file, index) => {
+            const reader = new FileReader();
+            const thumb = document.createElement('div');
+            thumb.className = 'thumbnail';
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.onclick = (e) => {
+                e.stopPropagation();
+                fileList.splice(index, 1);
+                renderPreviews(fileList, previewContainer, placeholder);
+            };
+            if (file.type.startsWith('image/')) {
+                reader.onload = e => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    thumb.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type.startsWith('video/')) {
+                const video = document.createElement('video');
+                video.src = URL.createObjectURL(file);
+                thumb.appendChild(video);
+            } else if (file.type === 'application/pdf') {
+                thumb.innerHTML = `<div class="w-full h-full bg-gray-700 flex items-center justify-center p-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>`;
+            }
+            thumb.appendChild(removeBtn);
+            previewContainer.appendChild(thumb);
+        });
+    }
+
+    // --- Notification ---
+    function showNotification(message, isError = false) {
+        notificationMessage.textContent = message;
+        notification.className = `fixed top-5 right-5 text-white py-2 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-[-20px] z-50 ${isError ? 'bg-red-600' : 'bg-green-600'}`;
+        notification.classList.remove('opacity-0', 'translate-y-[-20px]');
+        notification.classList.add('opacity-100', 'translate-y-0');
+        setTimeout(() => {
+            notification.classList.remove('opacity-100', 'translate-y-0');
+            notification.classList.add('opacity-0', 'translate-y-[-20px]');
+        }, 4000);
+    }
+
+    // --- Feedback ---
+    function getFeedback() {
+        return JSON.parse(localStorage.getItem(feedbackStorageKey)) || [];
+    }
+    function saveFeedback() {
+        const feedbackText = humanFeedbackInput.value.trim();
+        if (!feedbackText) {
+            showNotification("Feedback cannot be empty.", true);
+            return;
+        }
+        const feedbackList = getFeedback();
+        feedbackList.push(feedbackText);
+        localStorage.setItem(feedbackStorageKey, JSON.stringify(feedbackList));
+        humanFeedbackInput.value = '';
+        renderFeedbackList();
+        showNotification("Feedback saved and will be used in the next analysis.");
+    }
+    function deleteFeedback(index) {
+        const feedbackList = getFeedback();
+        feedbackList.splice(index, 1);
+        localStorage.setItem(feedbackStorageKey, JSON.stringify(feedbackList));
+        renderFeedbackList();
+    }
+    function renderFeedbackList() {
+        const feedbackList = getFeedback();
+        activeFeedbackList.innerHTML = '';
+        if (feedbackList.length === 0) {
+            activeFeedbackList.innerHTML = `<p class="text-gray-500 text-center text-sm">No human feedback rules saved yet.</p>`;
+            return;
+        }
+        feedbackList.forEach((feedback, index) => {
+            const item = document.createElement('div');
+            item.className = 'flex items-center justify-between bg-gray-800 p-2 rounded-md';
+            item.innerHTML = `
+                <p class="text-sm text-cyan-200 flex-1 mr-2">${feedback}</p>
+                <button data-index="${index}" class="delete-feedback-btn flex-shrink-0 bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-xs">Delete</button>
+            `;
+            item.querySelector('.delete-feedback-btn').onclick = () => deleteFeedback(index);
+            activeFeedbackList.appendChild(item);
+        });
+    }
+
+    // --- Review History ---
+    function getHistory() {
+        return JSON.parse(localStorage.getItem(historyStorageKey)) || [];
+    }
+    function saveHistory(entry) {
+        const historyList = getHistory();
+        historyList.unshift(entry);
+        localStorage.setItem(historyStorageKey, JSON.stringify(historyList.slice(0, 50))); // Keep max 50
+        renderHistoryList();
+    }
+    function renderHistoryList() {
+        const historyList = getHistory();
+        reviewHistoryList.innerHTML = '';
+        if (historyList.length === 0) {
+            reviewHistoryList.innerHTML = `<p class="text-gray-500 text-center text-sm">No past reviews found.</p>`;
+            return;
+        }
+        historyList.forEach((entry, idx) => {
+            const item = document.createElement('div');
+            item.className = 'bg-gray-800 rounded p-2 mb-1';
+            item.innerHTML = `<span class="text-xs text-gray-400">#${idx + 1} ${entry.time || ''}</span><br><span class="text-gray-200">${entry.summary}</span>`;
+            reviewHistoryList.appendChild(item);
+        });
+    }
+
+    // --- Analysis (Mockup) ---
+    function analyzeAssets() {
+        analysisOutput.innerHTML = `<div class="flex justify-center items-center py-8"><div class="spinner"></div></div>`;
+        setTimeout(() => {
+            // Fake a "pass/fail" analysis
+            let results = [];
+            assetsToReview.forEach(asset => {
+                const confidence = Math.floor(Math.random() * 30) + 70; // 70-100
+                results.push({
+                    fileName: asset.name,
+                    status: confidence > 85 ? 'Pass' : 'Fail',
+                    confidence,
+                    note: confidence > 85 ? 'Looks good!' : 'Needs revision.'
+                });
+            });
+            let html = results.map(res => `
+                <div class="mb-4 p-4 rounded-lg shadow bg-gray-700">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="font-semibold">${res.fileName}</span>
+                        <span class="text-sm ${res.status === 'Pass' ? 'text-green-400' : 'text-red-400'}">${res.status}</span>
+                    </div>
+                    <div>Confidence: <span class="font-mono">${res.confidence}%</span></div>
+                    <div class="text-gray-300">${res.note}</div>
+                </div>
+            `).join('');
+            analysisOutput.innerHTML = html || `<div class="text-gray-500 text-center py-6">No assets to analyze.</div>`;
+            // Save to history
+            saveHistory({
+                time: new Date().toLocaleString(),
+                summary: `Analyzed ${assetsToReview.length} assets. Pass: ${results.filter(r => r.status === 'Pass').length}, Fail: ${results.filter(r => r.status === 'Fail').length}`
+            });
+        }, 1200);
+    }
+
+    // --- Learning Mode: Suggest rule from repeated feedback ---
     let feedbackMemory = {};
     function checkForRepeatedFeedback() {
         let feedbackText = humanFeedbackInput.value.trim();
@@ -155,23 +335,36 @@
             suggestRuleBtn.classList.add('hidden');
         }
     }
+    humanFeedbackInput.addEventListener('input', checkForRepeatedFeedback);
 
-    // --- Your existing DOMContentLoaded event ---
+    // --- UI Bindings ---
+    assetUpload.addEventListener('change', (e) => {
+        assetsToReview = Array.from(e.target.files);
+        renderPreviews(assetsToReview, assetPreviews, assetPlaceholder);
+    });
+    referenceAssetUpload.addEventListener('change', (e) => {
+        referenceAssets = Array.from(e.target.files);
+        renderPreviews(referenceAssets, referencePreviews, referencePlaceholder);
+    });
+
+    analyzeButton.addEventListener('click', () => {
+        if (assetsToReview.length === 0) {
+            showNotification("Please upload at least one asset to check.", true);
+            return;
+        }
+        analyzeAssets();
+    });
+
+    saveFeedbackButton.addEventListener('click', saveFeedback);
+
+    // --- Drag & Drop Setup ---
     document.addEventListener('DOMContentLoaded', () => {
         renderFeedbackList();
         renderHistoryList();
         setupDragAndDrop(document.getElementById('asset-drop-area'), assetUpload, assetsToReview, renderPreviews, assetPlaceholder);
         setupDragAndDrop(document.getElementById('reference-drop-area'), referenceAssetUpload, referenceAssets, renderPreviews, referencePlaceholder);
-
-        // If using learning mode, add event
-        if (window.humanFeedbackInput && window.suggestRuleBtn) {
-            humanFeedbackInput.addEventListener('input', checkForRepeatedFeedback);
-        }
     });
 
-    // (RECOMMENDED) Now **copy all your original JS functions below** (asset upload, previews, feedback/humanFeedback, handleBatchAnalysis, etc.)
-    // Make sure all DOM elements and state variables are included (as in your working code).
-    // This script block should include all the logic your app needs.
 </script>
 </body>
 </html>
