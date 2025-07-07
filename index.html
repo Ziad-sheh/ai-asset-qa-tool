@@ -102,13 +102,19 @@
                  </button>
              </div>
              <div class="flex-grow flex flex-col min-h-0 space-y-4">
-                 <div>
-                     <h3 class="text-xl font-semibold mb-3 text-cyan-400">Active Human Feedback</h3>
-                     <div id="active-feedback-list" class="bg-gray-900/50 rounded-lg p-4 space-y-2 overflow-y-auto no-scrollbar max-h-32">
-                         <p class="text-gray-500 text-center">No human feedback rules saved yet.</p>
-                     </div>
-                 </div>
-                <div class="flex-grow flex flex-col min-h-0">
+                <div>
+                    <h3 class="text-xl font-semibold mb-3 text-cyan-400">Active Human Feedback</h3>
+                    <div id="active-feedback-list" class="bg-gray-900/50 rounded-lg p-4 space-y-2 overflow-y-auto no-scrollbar max-h-32">
+                        <p class="text-gray-500 text-center">No human feedback rules saved yet.</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold mb-3 text-cyan-400">Feedback History</h3>
+                    <div id="feedback-history-list" class="bg-gray-900/50 rounded-lg p-4 space-y-2 overflow-y-auto no-scrollbar max-h-32">
+                        <p class="text-gray-500 text-center">No feedback history yet.</p>
+                    </div>
+                </div>
+               <div class="flex-grow flex flex-col min-h-0">
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="text-xl font-semibold text-purple-400">Review History</h3>
                         <input id="history-search" type="text" placeholder="Search" class="p-1 bg-gray-700 border border-gray-600 rounded-lg text-sm" aria-label="Search review history" />
@@ -153,6 +159,7 @@
     const humanFeedbackInput = document.getElementById('human-feedback-input');
     const saveFeedbackButton = document.getElementById('save-feedback-button');
     const activeFeedbackList = document.getElementById('active-feedback-list');
+    const feedbackHistoryList = document.getElementById('feedback-history-list');
     const reviewHistoryList = document.getElementById('review-history-list');
     const historySearchInput = document.getElementById('history-search');
     // API KEY UI
@@ -165,18 +172,45 @@
     let historyData = [];
 
     // --- Firebase Feedback & History ---
+    function getFeedbackAuthor() {
+        let author = window.localStorage.getItem('FEEDBACK_AUTHOR');
+        if (!author) {
+            author = prompt('Enter your name for feedback history:') || '';
+            if (author) window.localStorage.setItem('FEEDBACK_AUTHOR', author);
+        }
+        return author || 'Anonymous';
+    }
+
+    async function logFeedbackHistory({ text, action, asset = null, batch = null }) {
+        await db.collection('feedbackHistory').add({
+            text,
+            action,
+            asset,
+            batch,
+            author: getFeedbackAuthor(),
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+
     async function saveFeedbackToFirebase(feedbackText) {
         await db.collection('humanFeedback').add({
             text: feedbackText,
             created: firebase.firestore.FieldValue.serverTimestamp()
         });
+        await logFeedbackHistory({ text: feedbackText, action: 'add' });
     }
     async function getFeedbackFromFirebase() {
         const snapshot = await db.collection('humanFeedback').orderBy('created').get();
         return snapshot.docs.map(doc => ({ id: doc.id, text: doc.data().text }));
     }
     async function deleteFeedbackFromFirebase(id) {
-        await db.collection('humanFeedback').doc(id).delete();
+        const docRef = db.collection('humanFeedback').doc(id);
+        const doc = await docRef.get();
+        const text = doc.exists ? doc.data().text : '';
+        await docRef.delete();
+        if (text) {
+            await logFeedbackHistory({ text, action: 'remove' });
+        }
     }
     async function saveToHistoryFirebase(item) {
         await db.collection('reviewHistory').add({
@@ -187,6 +221,35 @@
     async function getHistoryFromFirebase() {
         const snapshot = await db.collection('reviewHistory').orderBy('created', 'desc').get();
         return snapshot.docs.map(doc => doc.data());
+    }
+
+    async function getFeedbackHistoryFromFirebase() {
+        const snapshot = await db.collection('feedbackHistory').orderBy('timestamp', 'desc').get();
+        return snapshot.docs.map(doc => doc.data());
+    }
+
+    async function renderFeedbackHistoryList() {
+        const history = await getFeedbackHistoryFromFirebase();
+        feedbackHistoryList.innerHTML = '';
+        if (history.length === 0) {
+            feedbackHistoryList.innerHTML = `<p class="text-gray-500 text-center text-sm">No feedback history yet.</p>`;
+            return;
+        }
+        history.forEach(item => {
+            const element = document.createElement('div');
+            element.className = 'flex justify-between bg-gray-800 p-2 rounded-md';
+            const date = item.timestamp && item.timestamp.toDate ? item.timestamp.toDate().toLocaleString() : '';
+            element.innerHTML = `
+                <div class="flex-1 mr-2">
+                    <p class="text-sm text-cyan-200">${item.text}</p>
+                    <p class="text-xs text-gray-400">${item.author || 'Anonymous'}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-gray-400 capitalize">${item.action}</p>
+                    <p class="text-xs text-gray-500">${date}</p>
+                </div>`;
+            feedbackHistoryList.appendChild(element);
+        });
     }
 
     // --- API KEY HANDLING ---
@@ -238,6 +301,7 @@
             button.addEventListener('click', async (e) => {
                 await deleteFeedbackFromFirebase(e.currentTarget.dataset.id);
                 renderFeedbackList();
+                renderFeedbackHistoryList();
             });
         });
     }
@@ -247,6 +311,7 @@
         await saveFeedbackToFirebase(feedbackText);
         humanFeedbackInput.value = '';
         await renderFeedbackList();
+        await renderFeedbackHistoryList();
         showNotification("Feedback saved in the cloud.");
     });
 
@@ -584,6 +649,7 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
     // --- Init, event handlers, first render ---
     document.addEventListener('DOMContentLoaded', async () => {
         await renderFeedbackList();
+        await renderFeedbackHistoryList();
         await renderHistoryList();
         historySearchInput.addEventListener('input', (e) => renderHistoryList(e.target.value.trim()));
     });
