@@ -6,6 +6,8 @@ This project is a simple web-based tool for analyzing assets using Firebase for 
 
 1. Duplicate `firebaseConfig.example.js` and rename the copy to `firebaseConfig.js`.
 2. Fill in your Firebase project credentials in `firebaseConfig.js`.
-3. Deploy the `index.html` file along with the new `firebaseConfig.js` to your hosting environment.
+3. Deploy the `index.html`, the `src/` directory, and the new `firebaseConfig.js` to your hosting environment.
+
+Run `./build.sh` to copy the application files into a `dist/` directory for deployment.
 
 The `firebaseConfig.js` file is ignored by Git to prevent accidental commits of private keys.
