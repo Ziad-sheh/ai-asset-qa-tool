@@ -102,12 +102,18 @@
                  </button>
              </div>
              <div class="flex-grow flex flex-col min-h-0 space-y-4">
-                 <div>
-                     <h3 class="text-xl font-semibold mb-3 text-cyan-400">Active Human Feedback</h3>
-                     <div id="active-feedback-list" class="bg-gray-900/50 rounded-lg p-4 space-y-2 overflow-y-auto no-scrollbar max-h-32">
-                         <p class="text-gray-500 text-center">No human feedback rules saved yet.</p>
-                     </div>
-                 </div>
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xl font-semibold text-cyan-400">Active Human Feedback</h3>
+                        <div class="space-x-2">
+                            <button id="undo-feedback-button" class="bg-gray-600 hover:bg-gray-700 text-white text-sm px-2 py-1 rounded disabled:opacity-50" disabled>Undo</button>
+                            <button id="redo-feedback-button" class="bg-gray-600 hover:bg-gray-700 text-white text-sm px-2 py-1 rounded disabled:opacity-50" disabled>Redo</button>
+                        </div>
+                    </div>
+                    <div id="active-feedback-list" class="bg-gray-900/50 rounded-lg p-4 space-y-2 overflow-y-auto no-scrollbar max-h-32">
+                        <p class="text-gray-500 text-center">No human feedback rules saved yet.</p>
+                    </div>
+                </div>
                 <div class="flex-grow flex flex-col min-h-0">
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="text-xl font-semibold text-purple-400">Review History</h3>
@@ -153,6 +159,8 @@
     const humanFeedbackInput = document.getElementById('human-feedback-input');
     const saveFeedbackButton = document.getElementById('save-feedback-button');
     const activeFeedbackList = document.getElementById('active-feedback-list');
+    const undoFeedbackButton = document.getElementById('undo-feedback-button');
+    const redoFeedbackButton = document.getElementById('redo-feedback-button');
     const reviewHistoryList = document.getElementById('review-history-list');
     const historySearchInput = document.getElementById('history-search');
     // API KEY UI
@@ -163,13 +171,16 @@
     let assetsToReview = [];
     let referenceAssets = [];
     let historyData = [];
+    let undoStack = [];
+    let redoStack = [];
 
     // --- Firebase Feedback & History ---
     async function saveFeedbackToFirebase(feedbackText) {
-        await db.collection('humanFeedback').add({
+        const docRef = await db.collection('humanFeedback').add({
             text: feedbackText,
             created: firebase.firestore.FieldValue.serverTimestamp()
         });
+        return docRef.id;
     }
     async function getFeedbackFromFirebase() {
         const snapshot = await db.collection('humanFeedback').orderBy('created').get();
@@ -228,7 +239,7 @@
             item.className = 'flex items-center justify-between bg-gray-800 p-2 rounded-md';
             item.innerHTML = `
                 <p class="text-sm text-cyan-200 flex-1 mr-2">${text}</p>
-                <button data-id="${id}" class="delete-feedback-btn flex-shrink-0 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full">
+                <button data-id="${id}" data-text="${text}" class="delete-feedback-btn flex-shrink-0 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             `;
@@ -236,19 +247,63 @@
         });
         document.querySelectorAll('.delete-feedback-btn').forEach(button => {
             button.addEventListener('click', async (e) => {
-                await deleteFeedbackFromFirebase(e.currentTarget.dataset.id);
-                renderFeedbackList();
+                const id = e.currentTarget.dataset.id;
+                const text = e.currentTarget.dataset.text;
+                await deleteFeedbackFromFirebase(id);
+                undoStack.push({ type: 'delete', text });
+                redoStack = [];
+                await renderFeedbackList();
+                updateUndoRedoButtons();
             });
         });
     }
     saveFeedbackButton.addEventListener('click', async () => {
         const feedbackText = humanFeedbackInput.value.trim();
         if (!feedbackText) return showNotification("Feedback cannot be empty.", true);
-        await saveFeedbackToFirebase(feedbackText);
+        const id = await saveFeedbackToFirebase(feedbackText);
+        undoStack.push({ type: 'add', id, text: feedbackText });
+        redoStack = [];
         humanFeedbackInput.value = '';
         await renderFeedbackList();
+        updateUndoRedoButtons();
         showNotification("Feedback saved in the cloud.");
     });
+
+    function updateUndoRedoButtons() {
+        undoFeedbackButton.disabled = undoStack.length === 0;
+        redoFeedbackButton.disabled = redoStack.length === 0;
+    }
+
+    async function undoFeedbackAction() {
+        if (undoStack.length === 0) return;
+        const action = undoStack.pop();
+        if (action.type === 'add') {
+            await deleteFeedbackFromFirebase(action.id);
+            redoStack.push({ type: 'add', text: action.text });
+        } else if (action.type === 'delete') {
+            const newId = await saveFeedbackToFirebase(action.text);
+            redoStack.push({ type: 'delete', id: newId, text: action.text });
+        }
+        await renderFeedbackList();
+        updateUndoRedoButtons();
+    }
+
+    async function redoFeedbackAction() {
+        if (redoStack.length === 0) return;
+        const action = redoStack.pop();
+        if (action.type === 'add') {
+            const newId = await saveFeedbackToFirebase(action.text);
+            undoStack.push({ type: 'add', id: newId, text: action.text });
+        } else if (action.type === 'delete') {
+            await deleteFeedbackFromFirebase(action.id);
+            undoStack.push({ type: 'delete', text: action.text });
+        }
+        await renderFeedbackList();
+        updateUndoRedoButtons();
+    }
+
+    undoFeedbackButton.addEventListener('click', undoFeedbackAction);
+    redoFeedbackButton.addEventListener('click', redoFeedbackAction);
 
     // --- REVIEW HISTORY UI ---
     async function renderHistoryList(filter = '') {
@@ -586,6 +641,7 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
         await renderFeedbackList();
         await renderHistoryList();
         historySearchInput.addEventListener('input', (e) => renderHistoryList(e.target.value.trim()));
+        updateUndoRedoButtons();
     });
     assetUpload.addEventListener('change', (e) => handleFileUpload(e, assetsToReview, assetPreviews, assetPlaceholder));
     referenceAssetUpload.addEventListener('change', (e) => handleFileUpload(e, referenceAssets, referencePreviews, referencePlaceholder));
