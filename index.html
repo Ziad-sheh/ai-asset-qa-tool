@@ -34,6 +34,17 @@
     <p id="notification-message"></p>
 </div>
 
+<!-- Why Modal -->
+<div id="why-modal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden">
+    <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full">
+        <h3 class="text-lg font-semibold mb-4 text-white">Why this verdict?</h3>
+        <ul id="why-modal-list" class="list-disc list-inside space-y-2 text-gray-300"></ul>
+        <div class="text-right mt-4">
+            <button id="why-modal-close" class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded">Close</button>
+        </div>
+    </div>
+</div>
+
 <div class="container mx-auto p-4 md:p-8 max-w-7xl">
     <!-- Header -->
     <header class="text-center mb-8">
@@ -163,6 +174,9 @@
     const redoFeedbackButton = document.getElementById('redo-feedback-button');
     const reviewHistoryList = document.getElementById('review-history-list');
     const historySearchInput = document.getElementById('history-search');
+    const whyModal = document.getElementById('why-modal');
+    const whyModalList = document.getElementById('why-modal-list');
+    const whyModalClose = document.getElementById('why-modal-close');
     // API KEY UI
     const apiKeyInput = document.getElementById('api-key-input');
     const saveApiKeyBtn = document.getElementById('save-api-key-btn');
@@ -224,6 +238,21 @@
             notification.classList.remove('opacity-100', 'translate-y-0');
             notification.classList.add('opacity-0', 'translate-y-[-20px]');
         }, 4000);
+    }
+
+    function showWhyModal(points) {
+        whyModalList.innerHTML = '';
+        if (!points || points.length === 0) {
+            whyModalList.innerHTML = '<li>No details provided.</li>';
+        } else {
+            points.forEach(p => {
+                const icon = p.status === 'pass' ? '✅' : p.status === 'fail' ? '❌' : 'ℹ️';
+                const li = document.createElement('li');
+                li.textContent = `${icon} ${p.point}`;
+                whyModalList.appendChild(li);
+            });
+        }
+        whyModal.classList.remove('hidden');
     }
 
     // --- HUMAN FEEDBACK UI ---
@@ -328,20 +357,27 @@
                         <p class="text-sm font-medium text-purple-300 truncate" title="${item.assetName}">Reviewed: ${item.assetName}</p>
                         <p class="text-xs text-gray-400 truncate" title="${(item.referenceNames || []).join(', ')}">Reference(s): ${(item.referenceNames || []).join(', ')}</p>
                     </div>
-                     <p class="text-xs font-bold ${verdictColor} flex-shrink-0 ml-2">${item.verdict}</p>
+                    <div class="flex items-center gap-2 ml-2">
+                        <p class="text-xs font-bold ${verdictColor} flex-shrink-0">${item.verdict}</p>
+                        <button class="history-why-btn text-blue-400 underline text-xs flex-shrink-0">Why?</button>
+                    </div>
                 </div>
                 <p class="text-xs text-gray-500 w-full text-right mt-1">${item.date}</p>
             `;
+            const whyBtn = element.querySelector('.history-why-btn');
+            whyBtn.dataset.points = JSON.stringify(item.reportData.keyPoints || []);
+            whyBtn.addEventListener('click', (e) => { e.stopPropagation(); showWhyModal(JSON.parse(e.currentTarget.dataset.points)); });
             reviewHistoryList.appendChild(element);
         });
-        document.querySelectorAll('.history-item').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const reportData = JSON.parse(e.currentTarget.dataset.report);
-                const assetName = e.currentTarget.dataset.assetName;
-                analysisOutput.innerHTML = `<details class="bg-gray-800 rounded-lg overflow-hidden" open><summary class="p-4 cursor-pointer hover:bg-gray-700 flex justify-between items-center"><h3 class="font-semibold text-lg">${assetName}</h3><span class="font-bold text-lg ${ { 'Approved': 'text-green-400', 'Needs Revision': 'text-yellow-400', 'Rejected': 'text-red-400'}[reportData.overallVerdict]}">${reportData.overallVerdict}</span></summary><div class="p-4 border-t border-gray-700">${generateReportHTML(reportData)}</div></details>`;
-                showNotification(`Loaded report for ${assetName}`);
+            document.querySelectorAll('.history-item').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const reportData = JSON.parse(e.currentTarget.dataset.report);
+                    const assetName = e.currentTarget.dataset.assetName;
+                    analysisOutput.innerHTML = '';
+                    appendReportToDisplay({ assetName, reportData });
+                    showNotification(`Loaded report for ${assetName}`);
+                });
             });
-        });
     }
 
     // --- FILE UPLOADS & PREVIEW ---
@@ -551,7 +587,10 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
         const summary = document.createElement('summary');
         summary.className = 'p-4 cursor-pointer hover:bg-gray-700 flex justify-between items-center';
         const verdictColor = { 'Approved': 'text-green-400', 'Needs Revision': 'text-yellow-400', 'Rejected': 'text-red-400'}[item.reportData.overallVerdict];
-        summary.innerHTML = `<h3 class="font-semibold text-lg">${item.assetName}</h3><span class="font-bold text-lg ${verdictColor}">${item.reportData.overallVerdict || 'Error'}</span>`;
+        summary.innerHTML = `<h3 class="font-semibold text-lg">${item.assetName}</h3><div class="flex items-center gap-2"><span class="font-bold text-lg ${verdictColor}">${item.reportData.overallVerdict || 'Error'}</span><button class="why-btn text-blue-400 underline text-sm">Why?</button></div>`;
+        const whyBtn = summary.querySelector('.why-btn');
+        whyBtn.dataset.points = JSON.stringify(item.reportData.keyPoints || []);
+        whyBtn.addEventListener('click', (e) => { e.stopPropagation(); showWhyModal(JSON.parse(e.currentTarget.dataset.points)); });
         const content = document.createElement('div');
         content.className = 'p-4 border-t border-gray-700';
         content.innerHTML = item.reportData.error ? `<p class="text-red-400">${item.reportData.summary}</p>` : generateReportHTML(item.reportData);
@@ -652,6 +691,8 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
     referencePreviews.addEventListener('dragleave', () => referencePreviews.classList.remove('drag-highlight'));
     referencePreviews.addEventListener('drop', (e) => { referencePreviews.classList.remove('drag-highlight'); handleDropUpload(e, referenceAssets, referencePreviews, referencePlaceholder); });
     analyzeButton.addEventListener('click', handleBatchAnalysis);
+    whyModalClose.addEventListener('click', () => whyModal.classList.add('hidden'));
+    whyModal.addEventListener('click', (e) => { if (e.target === whyModal) whyModal.classList.add('hidden'); });
 </script>
 </body>
 </html>
