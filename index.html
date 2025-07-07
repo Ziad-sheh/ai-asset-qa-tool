@@ -240,10 +240,16 @@
         }, 4000);
     }
 
+    function sanitizeText(text) {
+        return text.replace(/[<>]/g, c => ({'<': '&lt;', '>': '&gt;'}[c]));
+    }
+
     function showWhyModal(points) {
-        whyModalList.innerHTML = '';
+        whyModalList.textContent = '';
         if (!points || points.length === 0) {
-            whyModalList.innerHTML = '<li>No details provided.</li>';
+            const li = document.createElement('li');
+            li.textContent = 'No details provided.';
+            whyModalList.appendChild(li);
         } else {
             points.forEach(p => {
                 const icon = p.status === 'pass' ? '✅' : p.status === 'fail' ? '❌' : 'ℹ️';
@@ -258,20 +264,27 @@
     // --- HUMAN FEEDBACK UI ---
     async function renderFeedbackList() {
         const feedbackList = await getFeedbackFromFirebase();
-        activeFeedbackList.innerHTML = '';
+        activeFeedbackList.textContent = '';
         if (feedbackList.length === 0) {
-            activeFeedbackList.innerHTML = `<p class="text-gray-500 text-center text-sm">No human feedback rules saved yet.</p>`;
+            const p = document.createElement('p');
+            p.className = 'text-gray-500 text-center text-sm';
+            p.textContent = 'No human feedback rules saved yet.';
+            activeFeedbackList.appendChild(p);
             return;
         }
         feedbackList.forEach(({ id, text }) => {
             const item = document.createElement('div');
             item.className = 'flex items-center justify-between bg-gray-800 p-2 rounded-md';
-            item.innerHTML = `
-                <p class="text-sm text-cyan-200 flex-1 mr-2">${text}</p>
-                <button data-id="${id}" data-text="${text}" class="delete-feedback-btn flex-shrink-0 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                </button>
-            `;
+            const p = document.createElement('p');
+            p.className = 'text-sm text-cyan-200 flex-1 mr-2';
+            p.textContent = sanitizeText(text);
+            const btn = document.createElement('button');
+            btn.dataset.id = id;
+            btn.dataset.text = text;
+            btn.className = 'delete-feedback-btn flex-shrink-0 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full';
+            btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>';
+            item.appendChild(p);
+            item.appendChild(btn);
             activeFeedbackList.appendChild(item);
         });
         document.querySelectorAll('.delete-feedback-btn').forEach(button => {
@@ -340,9 +353,12 @@
             historyData = await getHistoryFromFirebase();
         }
         const historyList = filter ? historyData.filter(item => (item.assetName && item.assetName.toLowerCase().includes(filter.toLowerCase())) || (item.verdict && item.verdict.toLowerCase().includes(filter.toLowerCase()))) : historyData;
-        reviewHistoryList.innerHTML = '';
+        reviewHistoryList.textContent = '';
         if (historyList.length === 0) {
-            reviewHistoryList.innerHTML = `<p class="text-gray-500 text-center text-sm">No past reviews found.</p>`;
+            const p = document.createElement('p');
+            p.className = 'text-gray-500 text-center text-sm';
+            p.textContent = 'No past reviews found.';
+            reviewHistoryList.appendChild(p);
             return;
         }
         historyList.forEach((item) => {
@@ -351,19 +367,38 @@
             element.dataset.report = JSON.stringify(item.reportData);
             element.dataset.assetName = item.assetName;
             const verdictColor = { 'Approved': 'text-green-400', 'Needs Revision': 'text-yellow-400', 'Rejected': 'text-red-400' }[item.verdict] || 'text-gray-400';
-            element.innerHTML = `
-                <div class="flex justify-between items-start w-full">
-                    <div class="flex-1">
-                        <p class="text-sm font-medium text-purple-300 truncate" title="${item.assetName}">Reviewed: ${item.assetName}</p>
-                        <p class="text-xs text-gray-400 truncate" title="${(item.referenceNames || []).join(', ')}">Reference(s): ${(item.referenceNames || []).join(', ')}</p>
-                    </div>
-                    <div class="flex items-center gap-2 ml-2">
-                        <p class="text-xs font-bold ${verdictColor} flex-shrink-0">${item.verdict}</p>
-                        <button class="history-why-btn text-blue-400 underline text-xs flex-shrink-0">Why?</button>
-                    </div>
-                </div>
-                <p class="text-xs text-gray-500 w-full text-right mt-1">${item.date}</p>
-            `;
+
+            const top = document.createElement('div');
+            top.className = 'flex justify-between items-start w-full';
+            const left = document.createElement('div');
+            left.className = 'flex-1';
+            const titleP = document.createElement('p');
+            titleP.className = 'text-sm font-medium text-purple-300 truncate';
+            titleP.title = item.assetName;
+            titleP.textContent = `Reviewed: ${item.assetName}`;
+            const refP = document.createElement('p');
+            refP.className = 'text-xs text-gray-400 truncate';
+            refP.title = (item.referenceNames || []).join(', ');
+            refP.textContent = `Reference(s): ${(item.referenceNames || []).join(', ')}`;
+            left.appendChild(titleP);
+            left.appendChild(refP);
+            const right = document.createElement('div');
+            right.className = 'flex items-center gap-2 ml-2';
+            const verdictP = document.createElement('p');
+            verdictP.className = `text-xs font-bold ${verdictColor} flex-shrink-0`;
+            verdictP.textContent = item.verdict;
+            const btn = document.createElement('button');
+            btn.className = 'history-why-btn text-blue-400 underline text-xs flex-shrink-0';
+            btn.textContent = 'Why?';
+            right.appendChild(verdictP);
+            right.appendChild(btn);
+            top.appendChild(left);
+            top.appendChild(right);
+            element.appendChild(top);
+            const dateP = document.createElement('p');
+            dateP.className = 'text-xs text-gray-500 w-full text-right mt-1';
+            dateP.textContent = item.date;
+            element.appendChild(dateP);
             const whyBtn = element.querySelector('.history-why-btn');
             whyBtn.dataset.points = JSON.stringify(item.reportData.keyPoints || []);
             whyBtn.addEventListener('click', (e) => { e.stopPropagation(); showWhyModal(JSON.parse(e.currentTarget.dataset.points)); });
@@ -373,7 +408,7 @@
                 button.addEventListener('click', (e) => {
                     const reportData = JSON.parse(e.currentTarget.dataset.report);
                     const assetName = e.currentTarget.dataset.assetName;
-                    analysisOutput.innerHTML = '';
+                    analysisOutput.textContent = '';
                     appendReportToDisplay({ assetName, reportData });
                     showNotification(`Loaded report for ${assetName}`);
                 });
@@ -403,7 +438,7 @@
         renderPreviews(fileList, previewContainer, placeholder);
     }
     function renderPreviews(fileList, previewContainer, placeholder) {
-        previewContainer.innerHTML = '';
+        previewContainer.textContent = '';
         if (fileList.length === 0) {
             previewContainer.appendChild(placeholder);
             return;
@@ -446,7 +481,7 @@
         analyzeButton.disabled = true;
         analyzeButton.textContent = 'Analyzing...';
         analysisPlaceholder.classList.add('hidden');
-        analysisOutput.innerHTML = '';
+        analysisOutput.textContent = '';
         const loader = document.createElement('div');
         loader.id = 'loader';
         loader.className = 'h-full flex flex-col items-center justify-center text-center text-gray-500 py-16';
@@ -487,7 +522,7 @@
             humanFeedbackSection.classList.remove('hidden');
         } catch (error) {
             console.error("Batch analysis failed:", error);
-            analysisOutput.innerHTML = `<div class="text-red-400 p-4 bg-red-900/50 rounded-lg"><strong>Error:</strong><br><br>${error.message}</div>`;
+            analysisOutput.innerHTML = `<div class="text-red-400 p-4 bg-red-900/50 rounded-lg"><strong>Error:</strong><br><br>${sanitizeText(error.message)}</div>`;
         } finally {
             const loaderElement = document.getElementById('loader');
             if(loaderElement) loaderElement.remove();
@@ -587,13 +622,13 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
         const summary = document.createElement('summary');
         summary.className = 'p-4 cursor-pointer hover:bg-gray-700 flex justify-between items-center';
         const verdictColor = { 'Approved': 'text-green-400', 'Needs Revision': 'text-yellow-400', 'Rejected': 'text-red-400'}[item.reportData.overallVerdict];
-        summary.innerHTML = `<h3 class="font-semibold text-lg">${item.assetName}</h3><div class="flex items-center gap-2"><span class="font-bold text-lg ${verdictColor}">${item.reportData.overallVerdict || 'Error'}</span><button class="why-btn text-blue-400 underline text-sm">Why?</button></div>`;
+        summary.innerHTML = `<h3 class="font-semibold text-lg">${sanitizeText(item.assetName)}</h3><div class="flex items-center gap-2"><span class="font-bold text-lg ${verdictColor}">${sanitizeText(item.reportData.overallVerdict || 'Error')}</span><button class="why-btn text-blue-400 underline text-sm">Why?</button></div>`;
         const whyBtn = summary.querySelector('.why-btn');
         whyBtn.dataset.points = JSON.stringify(item.reportData.keyPoints || []);
         whyBtn.addEventListener('click', (e) => { e.stopPropagation(); showWhyModal(JSON.parse(e.currentTarget.dataset.points)); });
         const content = document.createElement('div');
         content.className = 'p-4 border-t border-gray-700';
-        content.innerHTML = item.reportData.error ? `<p class="text-red-400">${item.reportData.summary}</p>` : generateReportHTML(item.reportData);
+        content.innerHTML = item.reportData.error ? `<p class="text-red-400">${sanitizeText(item.reportData.summary)}</p>` : generateReportHTML(item.reportData);
         reportCard.appendChild(summary);
         reportCard.appendChild(content);
         analysisOutput.appendChild(reportCard);
@@ -610,7 +645,7 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
             const arabicRegex = /[\u0600-\u06FF]/;
             return arabicRegex.test(text);
         }
-        const pointsHTML = (data.keyPoints || []).map(item => `<div class="flex items-start gap-3 p-3 rounded-md bg-gray-900/70"><div>${icons[item.status] || icons['info']}</div><p class="flex-1 text-gray-300">${item.point}</p></div>`).join('');
+        const pointsHTML = (data.keyPoints || []).map(item => `<div class="flex items-start gap-3 p-3 rounded-md bg-gray-900/70"><div>${icons[item.status] || icons['info']}</div><p class="flex-1 text-gray-300">${sanitizeText(item.point)}</p></div>`).join('');
         const copyAnalysisHTML = (data.copyAnalysis && data.copyAnalysis.length > 0) ? `
             <div class="pt-4">
                 <h4 class="text-lg font-semibold text-gray-300 mb-3">Copy-Specific Analysis</h4>
@@ -623,8 +658,8 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
                         const trackerDir = isTrackerArabic ? 'dir="rtl"' : '';
                         const trackerAlign = isTrackerArabic ? 'text-right' : 'text-left';
                         const trackerContent = item.trackerStatus === 'pass' 
-                            ? `<p class="text-sm text-gray-500">Matches Tracker Copy</p><p class="text-green-400 font-medium ${trackerAlign}" ${trackerDir}>${item.correspondingTrackerText}</p>`
-                            : `<p class="text-sm text-gray-500">Closest Tracker Copy</p><p class="text-yellow-400 font-medium ${trackerAlign}" ${trackerDir}>${item.correspondingTrackerText}</p>`;
+                            ? `<p class="text-sm text-gray-500">Matches Tracker Copy</p><p class="text-green-400 font-medium ${trackerAlign}" ${trackerDir}>${sanitizeText(item.correspondingTrackerText)}</p>`
+                            : `<p class="text-sm text-gray-500">Closest Tracker Copy</p><p class="text-yellow-400 font-medium ${trackerAlign}" ${trackerDir}>${sanitizeText(item.correspondingTrackerText)}</p>`;
                         const qualityStatusIcon = item.qualityNote.toLowerCase().includes('fail') ? icons.fail : icons.pass;
                         const confidenceColor = item.confidenceScore > 0.9 ? 'text-green-400' : item.confidenceScore > 0.7 ? 'text-yellow-400' : 'text-red-400';
                         return `
@@ -634,7 +669,7 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
                                 <div class="flex justify-between items-start">
                                     <div>
                                         <p class="text-sm text-gray-500">Asset Copy</p>
-                                        <p class="text-gray-200 font-medium mb-2 ${assetAlign}" ${assetDir}>${item.assetText}</p>
+                                        <p class="text-gray-200 font-medium mb-2 ${assetAlign}" ${assetDir}>${sanitizeText(item.assetText)}</p>
                                     </div>
                                     <div class="text-right ml-4">
                                         <p class="text-sm text-gray-500">Confidence</p>
@@ -647,7 +682,7 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
                                 <p class="text-sm text-gray-500">Quality Note</p>
                                 <div class="flex items-center gap-2">
                                     ${qualityStatusIcon}
-                                    <p class="text-gray-300">${item.qualityNote}</p>
+                                    <p class="text-gray-300">${sanitizeText(item.qualityNote)}</p>
                                 </div>
                             </div>
                         </div>
@@ -656,7 +691,7 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
             </div>
         ` : '';
         return `<div class="space-y-4">
-                    <p class="text-gray-400">${data.summary}</p>
+                    <p class="text-gray-400">${sanitizeText(data.summary)}</p>
                     ${(pointsHTML && pointsHTML.length > 0) ? `<div class="space-y-3 pt-4"><h4 class="text-lg font-semibold text-gray-300">Style & Visual Analysis</h4>${pointsHTML}</div>` : ''}
                     ${(copyAnalysisHTML && copyAnalysisHTML.length > 0) ? copyAnalysisHTML : ''}
                 </div>`;
