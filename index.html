@@ -134,21 +134,19 @@
                         <p class="text-gray-500 text-center">No past reviews found.</p>
                     </div>
                 </div>
+                <div class="flex-grow flex flex-col min-h-0">
+                    <h3 class="text-xl font-semibold mb-3 text-yellow-300">Feedback History</h3>
+                    <div id="feedback-history-list" class="flex-grow bg-gray-900/50 rounded-lg p-4 space-y-2 overflow-y-auto no-scrollbar">
+                        <p class="text-gray-500 text-center">No feedback history found.</p>
+                    </div>
+                </div>
              </div>
         </div>
     </div>
 </div>
 
 <script type="module">
-    // --- Firebase config (from your project) ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyCML9hLnQUzwHdWQtVZTkUVdLVta-PNzc",
-      authDomain: "qa-app-e7aa9.firebaseapp.com",
-      projectId: "qa-app-e7aa9",
-      storageBucket: "qa-app-e7aa9.appspot.com",
-      messagingSenderId: "994184038269",
-      appId: "1:994184038269:web:492bd15c26454c05142e14"
-    };
+    import { firebaseConfig } from './firebaseConfig.js';
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -174,6 +172,7 @@
     const redoFeedbackButton = document.getElementById('redo-feedback-button');
     const reviewHistoryList = document.getElementById('review-history-list');
     const historySearchInput = document.getElementById('history-search');
+    const feedbackHistoryList = document.getElementById('feedback-history-list');
     const whyModal = document.getElementById('why-modal');
     const whyModalList = document.getElementById('why-modal-list');
     const whyModalClose = document.getElementById('why-modal-close');
@@ -189,6 +188,7 @@
     let assetsToReview = [];
     let referenceAssets = [];
     let historyData = [];
+    let feedbackHistoryData = [];
     let undoStack = [];
     let redoStack = [];
 
@@ -198,14 +198,16 @@
             text: feedbackText,
             created: firebase.firestore.FieldValue.serverTimestamp()
         });
+        await logFeedbackHistory('add', feedbackText);
         return docRef.id;
     }
     async function getFeedbackFromFirebase() {
         const snapshot = await db.collection('humanFeedback').orderBy('created').get();
         return snapshot.docs.map(doc => ({ id: doc.id, text: doc.data().text }));
     }
-    async function deleteFeedbackFromFirebase(id) {
+    async function deleteFeedbackFromFirebase(id, text) {
         await db.collection('humanFeedback').doc(id).delete();
+        await logFeedbackHistory('remove', text);
     }
     async function saveToHistoryFirebase(item) {
         await db.collection('reviewHistory').add({
@@ -216,6 +218,30 @@
     async function getHistoryFromFirebase() {
         const snapshot = await db.collection('reviewHistory').orderBy('created', 'desc').get();
         return snapshot.docs.map(doc => doc.data());
+    }
+
+    async function logFeedbackHistory(action, text) {
+        const author = getFeedbackAuthorName();
+        await db.collection('feedbackHistory').add({
+            action,
+            text,
+            author,
+            created: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+
+    async function getFeedbackHistoryFromFirebase() {
+        const snapshot = await db.collection('feedbackHistory').orderBy('created', 'desc').get();
+        return snapshot.docs.map(doc => doc.data());
+    }
+
+    function getFeedbackAuthorName() {
+        let name = window.localStorage.getItem('FEEDBACK_AUTHOR_NAME');
+        if (!name) {
+            name = prompt('Enter your name for feedback history:') || 'Anonymous';
+            window.localStorage.setItem('FEEDBACK_AUTHOR_NAME', name);
+        }
+        return name;
     }
 
     // --- API KEY HANDLING ---
@@ -291,10 +317,12 @@
             button.addEventListener('click', async (e) => {
                 const id = e.currentTarget.dataset.id;
                 const text = e.currentTarget.dataset.text;
-                await deleteFeedbackFromFirebase(id);
+                await deleteFeedbackFromFirebase(id, text);
                 undoStack.push({ type: 'delete', text });
                 redoStack = [];
                 await renderFeedbackList();
+                feedbackHistoryData = [];
+                await renderFeedbackHistoryList();
                 updateUndoRedoButtons();
             });
         });
@@ -307,6 +335,8 @@
         redoStack = [];
         humanFeedbackInput.value = '';
         await renderFeedbackList();
+        feedbackHistoryData = []; // reset cache so new entry shows
+        await renderFeedbackHistoryList();
         updateUndoRedoButtons();
         showNotification("Feedback saved in the cloud.");
     });
@@ -320,13 +350,15 @@
         if (undoStack.length === 0) return;
         const action = undoStack.pop();
         if (action.type === 'add') {
-            await deleteFeedbackFromFirebase(action.id);
+            await deleteFeedbackFromFirebase(action.id, action.text);
             redoStack.push({ type: 'add', text: action.text });
         } else if (action.type === 'delete') {
             const newId = await saveFeedbackToFirebase(action.text);
             redoStack.push({ type: 'delete', id: newId, text: action.text });
         }
         await renderFeedbackList();
+        feedbackHistoryData = [];
+        await renderFeedbackHistoryList();
         updateUndoRedoButtons();
     }
 
@@ -337,10 +369,12 @@
             const newId = await saveFeedbackToFirebase(action.text);
             undoStack.push({ type: 'add', id: newId, text: action.text });
         } else if (action.type === 'delete') {
-            await deleteFeedbackFromFirebase(action.id);
+            await deleteFeedbackFromFirebase(action.id, action.text);
             undoStack.push({ type: 'delete', text: action.text });
         }
         await renderFeedbackList();
+        feedbackHistoryData = [];
+        await renderFeedbackHistoryList();
         updateUndoRedoButtons();
     }
 
@@ -419,6 +453,33 @@
                 appendReportToDisplay({ assetName, reportData });
                 showNotification(`Loaded report for ${assetName}`);
             });
+        });
+    }
+
+    async function renderFeedbackHistoryList() {
+        if (feedbackHistoryData.length === 0) {
+            feedbackHistoryData = await getFeedbackHistoryFromFirebase();
+        }
+        feedbackHistoryList.textContent = '';
+        if (feedbackHistoryData.length === 0) {
+            const p = document.createElement('p');
+            p.className = 'text-gray-500 text-center text-sm';
+            p.textContent = 'No feedback history found.';
+            feedbackHistoryList.appendChild(p);
+            return;
+        }
+        feedbackHistoryData.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-start bg-gray-800 p-2 rounded-md';
+            const msg = document.createElement('p');
+            msg.className = 'text-sm flex-1 text-gray-300';
+            msg.textContent = `${item.author} ${item.action} "${sanitize(item.text)}"`;
+            const dateP = document.createElement('p');
+            dateP.className = 'text-xs text-gray-500 ml-2';
+            dateP.textContent = new Date(item.created.seconds * 1000).toLocaleString();
+            div.appendChild(msg);
+            div.appendChild(dateP);
+            feedbackHistoryList.appendChild(div);
         });
     }
 
@@ -852,6 +913,7 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
     document.addEventListener('DOMContentLoaded', async () => {
         await renderFeedbackList();
         await renderHistoryList();
+        await renderFeedbackHistoryList();
         historySearchInput.addEventListener('input', (e) => renderHistoryList(e.target.value.trim()));
         updateUndoRedoButtons();
     });
