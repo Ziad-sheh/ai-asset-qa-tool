@@ -51,7 +51,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Left Column: Inputs -->
-        <div class="lg:col-span-2 bg-gray-800 p-6 rounded-xl shadow-2xl flex flex-col space-y-6">
+        <div class="lg:col-span-1 bg-gray-800 p-6 rounded-xl shadow-2xl flex flex-col space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <h3 class="text-xl font-semibold text-blue-400 mb-3">Assets to Check</h3>
@@ -70,20 +70,16 @@
                     </div>
                 </div>
             </div>
-             <div>
+            <div>
                 <label for="copy-input" class="block text-lg font-semibold mb-2 text-gray-200">3. Provide Context or Questions</label>
                 <textarea id="copy-input" rows="3" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 transition" placeholder="e.g., 'Check for brand compliance.'"></textarea>
-            </div>
-             <div>
-                 <label for="reference-info-input" class="block text-lg font-semibold mb-2 text-gray-200">4. Additional Style Notes</label>
-                <textarea id="reference-info-input" rows="3" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 transition" placeholder="e.g., 'The overall tone should be more exciting.'"></textarea>
             </div>
             <button id="analyze-button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-105 disabled:bg-gray-500 disabled:cursor-not-allowed disabled:scale-100 mt-4">
                 Analyze Batch
             </button>
         </div>
         <!-- Right Column: Analysis & Feedback -->
-        <div class="bg-gray-800 p-6 rounded-xl shadow-2xl flex flex-col space-y-6">
+        <div class="lg:col-span-2 bg-gray-800 p-6 rounded-xl shadow-2xl flex flex-col space-y-6">
              <div>
                 <h2 class="text-xl font-semibold mb-4 text-gray-200">AI Analysis & QA Report</h2>
                 <div id="analysis-output" class="bg-gray-900/50 rounded-lg p-4 space-y-4 overflow-y-auto max-h-[40vh] no-scrollbar">
@@ -143,7 +139,6 @@
     const referencePreviews = document.getElementById('reference-previews');
     const referencePlaceholder = document.getElementById('reference-placeholder');
     const copyInput = document.getElementById('copy-input');
-    const referenceInfoInput = document.getElementById('reference-info-input');
     const analyzeButton = document.getElementById('analyze-button');
     const analysisOutput = document.getElementById('analysis-output');
     const analysisPlaceholder = document.getElementById('analysis-placeholder');
@@ -411,7 +406,6 @@
         // Human feedback
         const feedbackArr = await getFeedbackFromFirebase();
         const humanFeedback = feedbackArr.map(f => f.text);
-        const referenceInfo = referenceInfoInput.value.trim();
         const mainPrompt = copyInput.value.trim();
 
         let initialPrompt = `**Task:** You are an expert QA agent. Analyze the "Primary Asset" by comparing it to the "Reference Assets".
@@ -458,7 +452,6 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
 
         const parts = [];
         parts.push({ text: initialPrompt });
-        if (referenceInfo) parts.push({ text: `\n\n--- Additional Style Notes ---\n${referenceInfo}` });
         parts.push({ text: "\n\n--- Reference Assets (Source of Truth for Copy & Style) ---" });
         parts.push(...referenceParts);
         parts.push({ text: "\n\n--- Primary Asset to Analyze ---" });
@@ -496,7 +489,13 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
         const summary = document.createElement('summary');
         summary.className = 'p-4 cursor-pointer hover:bg-gray-700 flex justify-between items-center';
         const verdictColor = { 'Approved': 'text-green-400', 'Needs Revision': 'text-yellow-400', 'Rejected': 'text-red-400'}[item.reportData.overallVerdict];
-        summary.innerHTML = `<h3 class="font-semibold text-lg">${item.assetName}</h3><span class="font-bold text-lg ${verdictColor}">${item.reportData.overallVerdict || 'Error'}</span>`;
+        const verdictIcons = {
+            'Approved': `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-400" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2 12a10 10 0 1120 0 10 10 0 01-20 0zm14.707-3.707a1 1 0 00-1.414-1.414L10 12.586 8.707 11.293a1 1 0 10-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`,
+            'Needs Revision': `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2 12a10 10 0 1120 0 10 10 0 01-20 0zm9-5a1 1 0 012 0v4a1 1 0 01-2 0V7zm1 8a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" clip-rule="evenodd" /></svg>`,
+            'Rejected': `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2 12a10 10 0 1120 0 10 10 0 01-20 0zm5.707-3.707a1 1 0 00-1.414 1.414L10.586 12l-4.293 4.293a1 1 0 101.414 1.414L12 13.414l4.293 4.293a1 1 0 001.414-1.414L13.414 12l4.293-4.293a1 1 0 00-1.414-1.414L12 10.586 7.707 6.293z" clip-rule="evenodd" /></svg>`
+        };
+        const verdictIcon = verdictIcons[item.reportData.overallVerdict] || '';
+        summary.innerHTML = `<h3 class="font-semibold text-lg">${item.assetName}</h3><div class="flex items-center gap-2"><span>${verdictIcon}</span><span class="font-bold text-lg ${verdictColor}">${item.reportData.overallVerdict || 'Error'}</span></div>`;
         const content = document.createElement('div');
         content.className = 'p-4 border-t border-gray-700';
         content.innerHTML = item.reportData.error ? `<p class="text-red-400">${item.reportData.summary}</p>` : generateReportHTML(item.reportData);
@@ -506,17 +505,13 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
     }
 
     function generateReportHTML(data) {
-        const icons = {
-            pass: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-            fail: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`,
-            info: `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
-        };
+        const infoIcon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
         const isArabic = (text) => {
             if (!text) return false;
             const arabicRegex = /[\u0600-\u06FF]/;
             return arabicRegex.test(text);
         }
-        const pointsHTML = (data.keyPoints || []).map(item => `<div class="flex items-start gap-3 p-3 rounded-md bg-gray-900/70"><div>${icons[item.status] || icons['info']}</div><p class="flex-1 text-gray-300">${item.point}</p></div>`).join('');
+        const pointsHTML = (data.keyPoints || []).map(item => `<div class="flex items-start gap-3 p-3 rounded-md bg-gray-900/70"><div>${infoIcon}</div><p class="flex-1 text-gray-300">${item.point}</p></div>`).join('');
         const copyAnalysisHTML = (data.copyAnalysis && data.copyAnalysis.length > 0) ? `
             <div class="pt-4">
                 <h4 class="text-lg font-semibold text-gray-300 mb-3">Copy-Specific Analysis</h4>
@@ -528,32 +523,26 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
                         const isTrackerArabic = isArabic(item.correspondingTrackerText);
                         const trackerDir = isTrackerArabic ? 'dir="rtl"' : '';
                         const trackerAlign = isTrackerArabic ? 'text-right' : 'text-left';
-                        const trackerContent = item.trackerStatus === 'pass' 
-                            ? `<p class="text-sm text-gray-500">Matches Tracker Copy</p><p class="text-green-400 font-medium ${trackerAlign}" ${trackerDir}>${item.correspondingTrackerText}</p>`
-                            : `<p class="text-sm text-gray-500">Closest Tracker Copy</p><p class="text-yellow-400 font-medium ${trackerAlign}" ${trackerDir}>${item.correspondingTrackerText}</p>`;
-                        const qualityStatusIcon = item.qualityNote.toLowerCase().includes('fail') ? icons.fail : icons.pass;
+                        const trackerColor = item.trackerStatus === 'pass' ? 'text-green-400' : 'text-yellow-400';
+                        const trackerLabel = item.trackerStatus === 'pass' ? 'Matches Tracker Copy' : 'Closest Tracker Copy';
                         const confidenceColor = item.confidenceScore > 0.9 ? 'text-green-400' : item.confidenceScore > 0.7 ? 'text-yellow-400' : 'text-red-400';
                         return `
                         <div class="flex items-start gap-4 p-3 rounded-md bg-gray-900/70">
-                            <div>${icons[item.trackerStatus] || icons['info']}</div>
+                            <div>${infoIcon}</div>
                             <div class="flex-1">
-                                <div class="flex justify-between items-start">
+                                <div class="grid grid-cols-2 gap-4 items-start">
                                     <div>
                                         <p class="text-sm text-gray-500">Asset Copy</p>
-                                        <p class="text-gray-200 font-medium mb-2 ${assetAlign}" ${assetDir}>${item.assetText}</p>
+                                        <p class="text-lg font-medium text-gray-200 ${assetAlign}" ${assetDir}>${item.assetText}</p>
                                     </div>
-                                    <div class="text-right ml-4">
-                                        <p class="text-sm text-gray-500">Confidence</p>
-                                        <p class="font-bold ${confidenceColor}">${(item.confidenceScore * 100).toFixed(0)}%</p>
+                                    <div>
+                                        <p class="text-sm text-gray-500">${trackerLabel}</p>
+                                        <p class="text-lg font-medium ${trackerColor} ${trackerAlign}" ${trackerDir}>${item.correspondingTrackerText}</p>
                                     </div>
                                 </div>
-                                <hr class="border-gray-700 my-2">
-                                ${trackerContent}
-                                <hr class="border-gray-700 my-2">
-                                <p class="text-sm text-gray-500">Quality Note</p>
-                                <div class="flex items-center gap-2">
-                                    ${qualityStatusIcon}
-                                    <p class="text-gray-300">${item.qualityNote}</p>
+                                <div class="flex justify-between items-center mt-2 text-sm text-gray-400">
+                                    <span>Confidence: <span class="font-bold ${confidenceColor}">${(item.confidenceScore * 100).toFixed(0)}%</span></span>
+                                    <span>${item.qualityNote}</span>
                                 </div>
                             </div>
                         </div>
