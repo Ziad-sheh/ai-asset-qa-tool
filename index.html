@@ -142,6 +142,7 @@
 <script type="module">
     // --- Firebase config is loaded from an external file ---
     import { firebaseConfig } from './firebaseConfig.js';
+    import { sanitize } from './utils.js';
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -174,10 +175,6 @@
     const apiKeyInput = document.getElementById('api-key-input');
     const saveApiKeyBtn = document.getElementById('save-api-key-btn');
     const apiKeyStatus = document.getElementById('api-key-status');
-
-    function sanitize(text) {
-        return text ? text.replace(/[<>]/g, '') : '';
-    }
 
     let assetsToReview = [];
     let referenceAssets = [];

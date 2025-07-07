@@ -1,0 +1,15 @@
+{
+  "name": "ai-asset-qa-tool",
+  "version": "1.0.0",
+  "description": "AI-Powered Asset QA Tool",
+  "type": "module",
+  "jest": {
+    "testEnvironment": "node"
+  },
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+  },
+  "devDependencies": {
+    "jest": "^29.6.1"
+  }
+}
