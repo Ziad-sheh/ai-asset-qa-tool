@@ -218,6 +218,22 @@
     function getApiKey() {
         return window.localStorage.getItem('GEMINI_API_KEY') || '';
     }
+    async function fetchApiKeyFromServer() {
+        try {
+            const res = await fetch('/api/api-key');
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.key) {
+                    setApiKey(data.key);
+                    apiKeyInput.value = data.key;
+                    return data.key;
+                }
+            }
+        } catch (err) {
+            console.log('Unable to fetch API key from server:', err);
+        }
+        return null;
+    }
     saveApiKeyBtn.onclick = () => {
         setApiKey(apiKeyInput.value.trim());
         apiKeyStatus.classList.remove('hidden');
@@ -843,6 +859,7 @@ ${mainPrompt || '(No specific request, focus on Core QA Rule)'}
 
     // --- Init, event handlers, first render ---
     document.addEventListener('DOMContentLoaded', async () => {
+        if (!getApiKey()) await fetchApiKeyFromServer();
         await renderFeedbackList();
         await renderHistoryList();
         historySearchInput.addEventListener('input', (e) => renderHistoryList(e.target.value.trim()));
