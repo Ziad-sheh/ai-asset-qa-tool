@@ -9,3 +9,7 @@ This project is a simple web-based tool for analyzing assets using Firebase for 
 3. Deploy the `index.html` file along with the new `firebaseConfig.js` to your hosting environment.
 
 The `firebaseConfig.js` file is ignored by Git to prevent accidental commits of private keys.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
