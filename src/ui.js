@@ -13,7 +13,6 @@ export function init() {
   const referencePreviews = document.getElementById('reference-previews');
   const referencePlaceholder = document.getElementById('reference-placeholder');
   const copyInput = document.getElementById('copy-input');
-  const referenceInfoInput = document.getElementById('reference-info-input');
   const analyzeButton = document.getElementById('analyze-button');
   const analysisOutput = document.getElementById('analysis-output');
   const analysisPlaceholder = document.getElementById('analysis-placeholder');
@@ -320,7 +319,7 @@ export function init() {
         loaderText.textContent = `Analyzing asset ${completedCount + 1} of ${totalCount}: ${asset.name}`;
         try {
           const mainAssetPart = await getAssetPayloadPart(asset);
-          const report = await getAnalysisForSingleAsset(mainAssetPart, referenceParts, referenceInfoInput.value.trim(), copyInput.value.trim());
+          const report = await getAnalysisForSingleAsset(mainAssetPart, referenceParts, copyInput.value.trim());
           appendReportToDisplay({ assetName: asset.name, reportData: report });
           const historyItem = {
             id: Date.now(),

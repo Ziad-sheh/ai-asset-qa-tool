@@ -21,7 +21,7 @@ export function getAssetPayloadPart(file) {
   });
 }
 
-export async function getAnalysisForSingleAsset(mainAssetPart, referenceParts, referenceInfo, mainPrompt) {
+export async function getAnalysisForSingleAsset(mainAssetPart, referenceParts, mainPrompt) {
   const feedbackArr = await getFeedbackFromFirebase();
   const humanFeedback = feedbackArr.map(f => f.text);
 
@@ -51,7 +51,6 @@ export async function getAnalysisForSingleAsset(mainAssetPart, referenceParts, r
 
   const parts = [];
   parts.push({ text: initialPrompt });
-  if (referenceInfo) parts.push({ text: `\n\n--- Additional Style Notes ---\n${referenceInfo}` });
   parts.push({ text: `\n\n--- Reference Assets (Source of Truth for Copy & Style) ---` });
   parts.push(...referenceParts);
   parts.push({ text: `\n\n--- Primary Asset to Analyze ---` });
