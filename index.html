@@ -44,6 +44,11 @@
         <input id="api-key-input" type="password" placeholder="Paste your Gemini API key here" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 transition mb-2">
         <button id="save-api-key-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">Save Key</button>
         <span id="api-key-status" class="ml-3 text-green-400 hidden">API Key saved!</span>
+        <select id="analysis-language" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 transition mt-4">
+            <option value="EN">EN</option>
+            <option value="AR">AR</option>
+            <option value="FR">FR</option>
+        </select>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -153,6 +158,12 @@
     const apiKeyInput = document.getElementById('api-key-input');
     const saveApiKeyBtn = document.getElementById('save-api-key-btn');
     const apiKeyStatus = document.getElementById('api-key-status');
+    const languageSelect = document.getElementById('analysis-language');
+    let analysisLanguage = languageSelect.value;
+    languageSelect.addEventListener('change', e => {
+        analysisLanguage = e.target.value;
+        setAnalysisLanguage(analysisLanguage);
+    });
 
     let assetsToReview = [];
     let referenceAssets = [];
@@ -182,12 +193,18 @@
         return snapshot.docs.map(doc => doc.data());
     }
 
-    // --- API KEY HANDLING ---
+    // --- API KEY & LANGUAGE HANDLING ---
     function setApiKey(key) {
         window.localStorage.setItem('GEMINI_API_KEY', key);
     }
     function getApiKey() {
         return window.localStorage.getItem('GEMINI_API_KEY') || '';
+    }
+    function setAnalysisLanguage(lang) {
+        window.localStorage.setItem('ANALYSIS_LANGUAGE', lang);
+    }
+    function getAnalysisLanguage() {
+        return window.localStorage.getItem('ANALYSIS_LANGUAGE') || 'EN';
     }
     saveApiKeyBtn.onclick = () => {
         setApiKey(apiKeyInput.value.trim());
@@ -195,6 +212,8 @@
         setTimeout(() => apiKeyStatus.classList.add('hidden'), 1500);
     };
     apiKeyInput.value = getApiKey();
+    languageSelect.value = getAnalysisLanguage();
+    analysisLanguage = languageSelect.value;
 
     // --- NOTIFICATION ---
     function showNotification(message, isError = false) {
@@ -388,6 +407,7 @@
         const mainPrompt = copyInput.value.trim();
 
         let initialPrompt = `**Task:** You are an expert QA agent. Analyze the "Primary Asset" by comparing it to the "Reference Assets".
+The assets will contain text primarily in ${analysisLanguage}. Extract and compare tracker copy accordingly.
 
 **HIGHEST PRIORITY - PERMANENT HUMAN FEEDBACK:**
 You MUST follow these rules above all else.
