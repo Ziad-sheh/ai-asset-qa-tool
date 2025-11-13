@@ -1,6 +1,32 @@
 import { saveFeedbackToFirebase, getFeedbackFromFirebase, deleteFeedbackFromFirebase, saveToHistoryFirebase, getHistoryFromFirebase } from './firebase.js';
 import { setApiKey, getApiKey, getAssetPayloadPart, getAnalysisForSingleAsset } from './api.js';
 
+const CONFIDENCE_THRESHOLDS = {
+  good: 0.9,
+  warn: 0.75
+};
+
+function normaliseText(str = '') {
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+async function withRetries(fn, attempts = 3) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (i === attempts - 1) throw err;
+      await new Promise(res => setTimeout(res, 1000 * Math.pow(2, i)));
+    }
+  }
+}
+
 function sanitize(text) {
   return text ? text.replace(/[<>]/g, '') : '';
 }
@@ -285,10 +311,18 @@ export function init() {
   async function handleBatchAnalysis() {
     if (assetsToReview.length === 0) return showNotification('Please upload at least one asset to check.', true);
     if (referenceAssets.length === 0) return showNotification('Please upload at least one reference asset.', true);
+
+    const trackerText = copyInput.value.trim();
+    const cleanedTrackerCopy = trackerText ? normaliseText(trackerText) : '';
+    const promptContext = trackerText
+      ? `${trackerText}\n\n[Normalized Tracker Copy]\n${cleanedTrackerCopy}`
+      : '';
+
     analyzeButton.disabled = true;
     analyzeButton.textContent = 'Analyzing...';
     analysisPlaceholder.classList.add('hidden');
     analysisOutput.textContent = '';
+
     const loader = document.createElement('div');
     loader.id = 'loader';
     loader.className = 'h-full flex flex-col items-center justify-center text-center text-gray-500 py-16';
@@ -308,38 +342,72 @@ export function init() {
     loader.appendChild(loaderTextEl);
     loader.appendChild(progressContainer);
     analysisOutput.appendChild(loader);
+
     let completedCount = 0;
     const totalCount = assetsToReview.length;
     const loaderText = document.getElementById('loader-text');
     const progressBar = document.getElementById('progress-bar');
-    progressBar.style.width = '0%';
+    if (progressBar) progressBar.style.width = '0%';
+
     try {
-      const referenceParts = await Promise.all(referenceAssets.map(file => getAssetPayloadPart(file)));
-      for (const asset of assetsToReview) {
-        loaderText.textContent = `Analyzing asset ${completedCount + 1} of ${totalCount}: ${asset.name}`;
-        try {
-          const mainAssetPart = await getAssetPayloadPart(asset);
-          const report = await getAnalysisForSingleAsset(mainAssetPart, referenceParts, copyInput.value.trim());
-          appendReportToDisplay({ assetName: asset.name, reportData: report });
-          const historyItem = {
-            id: Date.now(),
-            date: new Date().toLocaleString(),
-            assetName: asset.name,
-            referenceNames: referenceAssets.map(f => f.name),
-            verdict: report.overallVerdict,
-            reportData: report
-          };
-          await saveToHistoryFirebase(historyItem);
-          historyData.push(historyItem);
-        } catch (assetError) {
-          console.error(`Error analyzing ${asset.name}:`, assetError);
-          appendReportToDisplay({ assetName: asset.name, reportData: { error: true, summary: assetError.message } });
-        } finally {
-          completedCount++;
-          const progress = Math.round((completedCount / totalCount) * 100);
-          progressBar.style.width = `${progress}%`;
-        }
-      }
+      const referenceParts = await Promise.all(
+        referenceAssets.map(file => withRetries(() => getAssetPayloadPart(file)))
+      );
+
+      const assetPayloads = await Promise.all(
+        assetsToReview.map(async asset => {
+          try {
+            const payload = await withRetries(() => getAssetPayloadPart(asset));
+            return { asset, payload };
+          } catch (error) {
+            return { asset, error };
+          }
+        })
+      );
+
+      const analysisPromises = assetPayloads.map(({ asset, payload, error }) => {
+        let statusMessage = `Processed ${asset.name}`;
+        const runAnalysis = error
+          ? () => Promise.reject(error)
+          : () => withRetries(() => getAnalysisForSingleAsset(payload, referenceParts, promptContext));
+
+        return runAnalysis()
+          .then(async (report) => {
+            statusMessage = `Completed ${asset.name}`;
+            appendReportToDisplay({ assetName: asset.name, reportData: report });
+            const historyItem = {
+              id: `${Date.now()}-${Math.random()}`,
+              date: new Date().toLocaleString(),
+              assetName: asset.name,
+              referenceNames: referenceAssets.map(f => f.name),
+              verdict: report.overallVerdict,
+              reportData: report
+            };
+            await saveToHistoryFirebase(historyItem);
+            historyData.push(historyItem);
+            return { asset, report };
+          })
+          .catch(err => {
+            statusMessage = `Failed to analyze ${asset.name}`;
+            console.error(`Error analyzing ${asset.name}:`, err);
+            appendReportToDisplay({
+              assetName: asset.name,
+              reportData: { error: true, summary: `Failed to analyze ${asset.name}: ${err.message}` }
+            });
+            throw err;
+          })
+          .finally(() => {
+            completedCount++;
+            const progress = Math.round((completedCount / totalCount) * 100);
+            if (progressBar) progressBar.style.width = `${progress}%`;
+            if (loaderText) {
+              const suffix = totalCount === 1 ? '' : 's';
+              loaderText.textContent = `${statusMessage} (${completedCount}/${totalCount} asset${suffix})`;
+            }
+          });
+      });
+
+      await Promise.allSettled(analysisPromises);
       humanFeedbackSection.classList.remove('hidden');
     } catch (error) {
       console.error('Batch analysis failed:', error);
@@ -414,6 +482,7 @@ export function init() {
       const arabicRegex = /[\u0600-\u06FF]/;
       return arabicRegex.test(text);
     };
+    const { good, warn } = CONFIDENCE_THRESHOLDS;
 
     const container = document.createElement('div');
     container.className = 'space-y-4';
@@ -454,21 +523,27 @@ export function init() {
       const space = document.createElement('div');
       space.className = 'space-y-3';
       data.copyAnalysis.forEach(item => {
-        const isAssetArabic = isArabic(item.assetText);
+        const assetTextRaw = item.assetText || '';
+        const trackerTextRaw = item.correspondingTrackerText || '';
+        const cleanedAssetCopy = normaliseText(assetTextRaw);
+        const cleanedTrackerCopy = normaliseText(trackerTextRaw);
+        const trackerStatus = item.trackerStatus || (cleanedAssetCopy && cleanedTrackerCopy && cleanedAssetCopy === cleanedTrackerCopy ? 'pass' : 'fail');
+        const matchesTracker = trackerStatus === 'pass';
+        const isAssetArabic = isArabic(assetTextRaw);
         const assetDir = isAssetArabic ? 'rtl' : 'ltr';
         const assetAlign = isAssetArabic ? 'text-right' : 'text-left';
-        const isTrackerArabic = isArabic(item.correspondingTrackerText);
+        const isTrackerArabic = isArabic(trackerTextRaw);
         const trackerDir = isTrackerArabic ? 'rtl' : 'ltr';
         const trackerAlign = isTrackerArabic ? 'text-right' : 'text-left';
         const trackerContentWrap = document.createElement('div');
-        if (item.trackerStatus === 'pass') {
+        if (matchesTracker) {
           const p1 = document.createElement('p');
           p1.className = 'text-sm text-gray-500';
           p1.textContent = 'Matches Tracker Copy';
           const p2 = document.createElement('p');
           p2.className = `text-green-400 font-medium ${trackerAlign}`;
           p2.dir = trackerDir;
-          p2.textContent = sanitize(item.correspondingTrackerText);
+          p2.textContent = sanitize(trackerTextRaw);
           trackerContentWrap.appendChild(p1);
           trackerContentWrap.appendChild(p2);
         } else {
@@ -478,16 +553,17 @@ export function init() {
           const p2 = document.createElement('p');
           p2.className = `text-yellow-400 font-medium ${trackerAlign}`;
           p2.dir = trackerDir;
-          p2.textContent = sanitize(item.correspondingTrackerText);
+          p2.textContent = sanitize(trackerTextRaw);
           trackerContentWrap.appendChild(p1);
           trackerContentWrap.appendChild(p2);
         }
-        const qualityStatusIcon = item.qualityNote.toLowerCase().includes('fail') ? icons.fail : icons.pass;
-        const confidenceColor = item.confidenceScore > 0.9 ? 'text-green-400' : item.confidenceScore > 0.7 ? 'text-yellow-400' : 'text-red-400';
+        const qualityNote = item.qualityNote || '';
+        const qualityStatusIcon = qualityNote.toLowerCase().includes('fail') ? icons.fail : icons.pass;
+        const confidenceColor = item.confidenceScore > good ? 'text-green-400' : item.confidenceScore > warn ? 'text-yellow-400' : 'text-red-400';
         const row = document.createElement('div');
         row.className = 'flex items-start gap-4 p-3 rounded-md bg-gray-900/70';
         const iconWrap = document.createElement('div');
-        iconWrap.innerHTML = icons[item.trackerStatus] || icons['info'];
+        iconWrap.innerHTML = icons[trackerStatus] || icons['info'];
         const flex1 = document.createElement('div');
         flex1.className = 'flex-1';
         const topRow = document.createElement('div');
@@ -499,7 +575,7 @@ export function init() {
         const assetText = document.createElement('p');
         assetText.className = `text-gray-200 font-medium mb-2 ${assetAlign}`;
         assetText.dir = assetDir;
-        assetText.textContent = sanitize(item.assetText);
+        assetText.textContent = sanitize(assetTextRaw);
         left.appendChild(assetLabel);
         left.appendChild(assetText);
         const right = document.createElement('div');
@@ -529,7 +605,7 @@ export function init() {
         qualIcon.innerHTML = qualityStatusIcon;
         const qualText = document.createElement('p');
         qualText.className = 'text-gray-300';
-        qualText.textContent = sanitize(item.qualityNote);
+        qualText.textContent = sanitize(qualityNote);
         qualityRow.appendChild(qualIcon);
         qualityRow.appendChild(qualText);
         flex1.appendChild(qualityLabel);
