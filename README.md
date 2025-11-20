@@ -1,21 +1,25 @@
 # AI-Powered Asset QA Tool
 
-This project is a simple web-based tool for analyzing assets using Firebase for storage and Firestore. The Firebase configuration is loaded from an external JavaScript file so that sensitive project keys are not committed to the repository.
+This project is a single-page, web-based tool for analyzing creative assets. It sends user-selected assets and reference files to Gemini for comparison, stores feedback rules and history in Firestore when available, and falls back to in-memory storage when Firebase credentials are not provided.
 
 ## Configuration
 
-1. Duplicate `firebaseConfig.example.js` and rename the copy to `firebaseConfig.js`.
-2. Fill in your Firebase project credentials in `firebaseConfig.js`.
-3. Deploy the `index.html`, the `src/` directory, and the new `firebaseConfig.js` to your hosting environment.
+The application reads configuration from global variables that you can inject at runtime. Set these before loading the page (for example, via an inline script tag or server-side templating):
+
+- `__firebase_config`: JSON string containing your Firebase web configuration.
+- `__app_id` (optional): application identifier used to namespace Firestore collections.
+- `__initial_auth_token` (optional): a Firebase custom token if you want to avoid anonymous auth.
+
+If no Firebase configuration is provided, the app runs in local/mock mode and stores feedback/history in memory for the current session.
+
+> **Legacy note:** `firebaseConfig.example.js` remains in the repo for reference but is no longer loaded automatically by `index.html`.
 
 Run `./build.sh` to copy the application files into a `dist/` directory for deployment.
-
-The `firebaseConfig.js` file is ignored by Git to prevent accidental commits of private keys.
 
 ## Prerequisites
 
 - **Node.js** 16 or later so you can run local servers with `npx`.
-- **Firebase project** with **Cloud Firestore** enabled. Copy the project's web configuration into `firebaseConfig.js` and ensure your Firestore rules allow the tool to read and write data during testing.
+- **Firebase project** with **Cloud Firestore** enabled if you want cloud persistence. You can embed the project's web configuration in `__firebase_config` (or adapt `firebaseConfig.js` to set that global) and ensure your Firestore rules allow the tool to read and write data during testing.
 
 ## Running Locally
 
