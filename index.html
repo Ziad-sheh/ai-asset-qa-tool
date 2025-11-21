@@ -597,7 +597,12 @@
 
         async function saveHistory(item) {
             if (!currentUser || !db) {
-                state.history.unshift({ ...item, created: Date.now() });
+                const newItem = { ...item, created: Date.now() };
+                state.history.unshift(newItem);
+                // Persist to localStorage
+                try {
+                    localStorage.setItem('qa_tool_history', JSON.stringify(state.history.slice(0, 50))); // Keep last 50 items
+                } catch (e) { console.warn("Storage full", e); }
                 return;
             }
             const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'reviewHistory');
@@ -606,6 +611,11 @@
 
         async function getHistory() {
             if (!currentUser || !db) {
+                // Load from localStorage if empty
+                if (state.history.length === 0) {
+                    const stored = localStorage.getItem('qa_tool_history');
+                    if (stored) state.history = JSON.parse(stored);
+                }
                 return state.history.sort((a, b) => b.created - a.created);
             }
             try {
@@ -629,7 +639,7 @@
         function getApiKey() { return localStorage.getItem('GEMINI_API_KEY') || ''; }
 
         // Helper to resize image if it's too large (prevents payload issues)
-        function resizeImage(file, maxWidth = 1536) {
+        function resizeImage(file, maxWidth = 2048) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -896,6 +906,8 @@
         **PROCESS:**
         1. **Deep Visual Scan:** Compare layout, logo placement, colors, and fonts.
         2. **OCR & Copy Check:** Read ALL text on the Primary Asset. Match against the *correct* market column in Reference Assets.
+           - **VERIFICATION:** You MUST explicitly state which column header you are using (e.g., "Checked against 'AEEN' column").
+           - If the text matches a DIFFERENT market column (e.g. found 'US' copy in 'UAE' asset), flag it as a FAIL.
         3. **Reasoning Trace:** Before deciding PASS/FAIL, you MUST explain your logic in the 'reasoning_trace' field. **KEEP IT EXTREMELY CONCISE (Max 2-3 sentences).**
         4. **Final Output:** Return strictly JSON.
         `;
