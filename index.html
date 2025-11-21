@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,528 +10,807 @@
     <!-- Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .spinner { border: 4px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 4px solid #3b82f6; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0%{transform:rotate(0deg);}100%{transform:rotate(360deg);} }
-        #notification { transition: opacity 0.5s, transform 0.5s; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .thumbnail { position: relative; width: 100px; height: 100px; overflow: hidden; border-radius: 0.5rem;}
-        .thumbnail img, .thumbnail video { width: 100%; height: 100%; object-fit: cover;}
-        .thumbnail .remove-btn { position: absolute; top: 4px; right: 4px; background-color: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.2s;}
-        .thumbnail:hover .remove-btn { opacity: 1;}
-        .progress-container { width: 100%; background-color: #374151; height: 0.5rem; border-radius: 0.25rem; overflow: hidden; margin-top: 0.5rem; }
-        .progress-bar { height: 100%; background-color: #3b82f6; width: 0%; transition: width 0.3s; }
-        .drag-highlight { border: 2px dashed #3b82f6; }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #3b82f6;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #notification {
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .thumbnail {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            overflow: hidden;
+            border-radius: 0.5rem;
+        }
+
+        .thumbnail img,
+        .thumbnail video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .thumbnail .remove-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .thumbnail:hover .remove-btn {
+            opacity: 1;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #374151;
+            height: 0.5rem;
+            border-radius: 0.25rem;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #3b82f6;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .drag-highlight {
+            border: 2px dashed #3b82f6;
+        }
+
         /* Custom scrollbar for modal lists */
-        #why-modal-list::-webkit-scrollbar { width: 6px; }
-        #why-modal-list::-webkit-scrollbar-track { background: #1f2937; }
-        #why-modal-list::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+        #why-modal-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #why-modal-list::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+
+        #why-modal-list::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
     </style>
 </head>
+
 <body class="bg-gray-900 text-white antialiased">
 
-<!-- Notification Element -->
-<div id="notification" class="fixed top-5 right-5 bg-red-600 text-white py-2 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-[-20px] z-50 pointer-events-none">
-    <p id="notification-message"></p>
-</div>
-
-<!-- Why/Reasoning Modal -->
-<div id="why-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden backdrop-blur-sm">
-    <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full shadow-2xl border border-gray-700">
-        <h3 class="text-lg font-semibold mb-4 text-white flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>
-            Analysis Logic
-        </h3>
-        <div class="mb-4 p-3 bg-gray-900/50 rounded border border-gray-700 text-sm text-gray-400 italic">
-            <span class="font-bold text-blue-400">AI Reasoning:</span> <span id="why-reasoning-text"></span>
-        </div>
-        <ul id="why-modal-list" class="list-none space-y-3 text-gray-300 max-h-[50vh] overflow-y-auto pr-2"></ul>
-        <div class="text-right mt-6 pt-4 border-t border-gray-700">
-            <button id="why-modal-close" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors text-sm font-medium">Close</button>
-        </div>
+    <!-- Notification Element -->
+    <div id="notification"
+        class="fixed top-5 right-5 bg-red-600 text-white py-2 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-[-20px] z-50 pointer-events-none">
+        <p id="notification-message"></p>
     </div>
-</div>
 
-<!-- Fix Suggestion Modal -->
-<div id="fix-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden backdrop-blur-sm">
-    <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full shadow-2xl border border-gray-700">
-        <h3 class="text-lg font-semibold mb-4 text-white flex items-center gap-2">
-            <span class="text-yellow-400">✨</span> AI Suggestion
-        </h3>
-        <div class="space-y-4">
-             <div>
-                 <label class="text-xs text-gray-500 uppercase">Problem</label>
-                 <p id="fix-problem-text" class="text-sm text-red-300 italic">...</p>
-             </div>
-             <div>
-                 <label class="text-xs text-gray-500 uppercase">Suggested Fix</label>
-                 <div class="bg-gray-900 p-3 rounded border border-gray-600 relative group">
-                     <p id="fix-suggestion-text" class="text-green-400 font-mono text-sm">...</p>
-                     <button id="copy-fix-btn" class="absolute top-2 right-2 text-gray-500 hover:text-white opacity-0 group-hover:opacity-100 transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                     </button>
-                 </div>
-             </div>
-        </div>
-        <div class="text-right mt-6 pt-4 border-t border-gray-700">
-            <button id="fix-modal-close" class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors text-sm font-medium">Close</button>
-        </div>
-    </div>
-</div>
-
-<div class="container mx-auto p-4 md:p-8 max-w-7xl">
-    <!-- Header -->
-    <header class="text-center mb-8">
-        <div class="inline-flex items-center justify-center p-3 bg-blue-600/20 rounded-full mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        </div>
-        <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">AI-Powered Asset QA Tool</h1>
-        <p class="text-gray-400 mt-3 text-lg max-w-2xl mx-auto">
-            Powered by <strong>Gemini 3.0 Pro</strong>.<br>
-            Validate copy, check compliance, and maintain brand consistency.
-        </p>
-    </header>
-
-    <!-- API Key -->
-    <div class="mb-8 max-w-xl mx-auto bg-gray-800/50 p-4 rounded-xl border border-gray-700/50 backdrop-blur-sm">
-        <label for="api-key-input" class="block text-sm font-semibold text-gray-300 mb-2">Gemini API Key</label>
-        <div class="flex gap-2">
-            <input id="api-key-input" type="password" placeholder="Paste your Gemini API key here (Starts with AIza...)" class="flex-1 p-2.5 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm text-white placeholder-gray-600">
-            <button id="save-api-key-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm whitespace-nowrap">Save Key</button>
-        </div>
-        <div id="api-key-status" class="mt-2 text-xs text-green-400 hidden flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
-            Key saved locally
+    <!-- Why/Reasoning Modal -->
+    <div id="why-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full shadow-2xl border border-gray-700">
+            <h3 class="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400" viewBox="0 0 20 20"
+                    fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clip-rule="evenodd" />
+                </svg>
+                Analysis Logic
+            </h3>
+            <div class="mb-4 p-3 bg-gray-900/50 rounded border border-gray-700 text-sm text-gray-400 italic">
+                <span class="font-bold text-blue-400">AI Reasoning:</span> <span id="why-reasoning-text"></span>
+            </div>
+            <ul id="why-modal-list" class="list-none space-y-3 text-gray-300 max-h-[50vh] overflow-y-auto pr-2"></ul>
+            <div class="text-right mt-6 pt-4 border-t border-gray-700">
+                <button id="why-modal-close"
+                    class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors text-sm font-medium">Close</button>
+            </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <!-- Left Column: Inputs (4 cols) -->
-        <div class="lg:col-span-4 space-y-6">
-            <!-- Upload Section -->
-            <div class="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700/50">
-                <div class="space-y-6">
-                    <!-- Assets -->
-                    <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-md font-semibold text-blue-400 flex items-center gap-2">
-                                <span class="bg-blue-500/20 w-6 h-6 rounded flex items-center justify-center text-xs">1</span>
-                                Assets to Check
-                            </h3>
-                            <span id="asset-count" class="text-xs text-gray-500">0 files</span>
-                        </div>
-                        <label for="asset-upload" class="group w-full flex flex-col items-center justify-center h-32 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer hover:border-blue-500 hover:bg-gray-700/50 transition-all">
-                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                                <svg class="w-8 h-8 mb-3 text-gray-400 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                                <p class="text-sm text-gray-400"><span class="font-semibold">Click to upload</span> or drag and drop</p>
-                                <p class="text-xs text-gray-500 mt-1">Images or MP4 Video</p>
-                            </div>
-                            <input type="file" id="asset-upload" accept="image/*,video/mp4" class="hidden" multiple/>
-                        </label>
-                        <div id="asset-previews" class="mt-3 grid grid-cols-3 gap-2 min-h-[20px]"></div>
-                    </div>
-
-                    <div class="border-t border-gray-700/50"></div>
-
-                    <!-- References -->
-                    <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <h3 class="text-md font-semibold text-green-400 flex items-center gap-2">
-                                <span class="bg-green-500/20 w-6 h-6 rounded flex items-center justify-center text-xs">2</span>
-                                Reference Material
-                            </h3>
-                            <span id="ref-count" class="text-xs text-gray-500">0 files</span>
-                        </div>
-                        <label for="reference-asset-upload" class="group w-full flex flex-col items-center justify-center h-24 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer hover:border-green-500 hover:bg-gray-700/50 transition-all">
-                            <div class="flex flex-col items-center justify-center">
-                                <p class="text-sm text-gray-400 group-hover:text-green-400 transition-colors"><span class="font-semibold">Upload References</span></p>
-                                <p class="text-xs text-gray-500 mt-1">Style guides, approved copy (PDF/Img)</p>
-                            </div>
-                            <input type="file" id="reference-asset-upload" accept="image/*,application/pdf" class="hidden" multiple/>
-                        </label>
-                        <div id="reference-previews" class="mt-3 grid grid-cols-3 gap-2 min-h-[20px]"></div>
+    <!-- Fix Suggestion Modal -->
+    <div id="fix-modal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+        <div class="bg-gray-800 p-6 rounded-lg max-w-md w-full shadow-2xl border border-gray-700">
+            <h3 class="text-lg font-semibold mb-4 text-white flex items-center gap-2">
+                <span class="text-yellow-400">✨</span> AI Suggestion
+            </h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-500 uppercase">Problem</label>
+                    <p id="fix-problem-text" class="text-sm text-red-300 italic">...</p>
+                </div>
+                <div>
+                    <label class="text-xs text-gray-500 uppercase">Suggested Fix</label>
+                    <div class="bg-gray-900 p-3 rounded border border-gray-600 relative group">
+                        <p id="fix-suggestion-text" class="text-green-400 font-mono text-sm">...</p>
+                        <button id="copy-fix-btn"
+                            class="absolute top-2 right-2 text-gray-500 hover:text-white opacity-0 group-hover:opacity-100 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
             </div>
+            <div class="text-right mt-6 pt-4 border-t border-gray-700">
+                <button id="fix-modal-close"
+                    class="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors text-sm font-medium">Close</button>
+            </div>
+        </div>
+    </div>
 
-            <!-- Context & Action -->
-            <div class="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700/50">
-                <!-- NEW: Market Selector -->
-                <div class="mb-4">
-                    <label for="market-input" class="block text-md font-semibold mb-2 text-gray-200 flex items-center gap-2">
-                        <span class="bg-purple-500/20 w-6 h-6 rounded flex items-center justify-center text-xs text-purple-400">3</span>
-                        Target Market / Locale
-                    </label>
-                    <input id="market-input" type="text" class="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition text-sm text-white placeholder-gray-600" placeholder="e.g., 'UAE', 'KSA', 'AEEN', 'SAAR'">
-                    <p class="text-xs text-gray-500 mt-1">Specify the market to ensure the AI checks the correct reference column.</p>
-                </div>
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <div class="inline-flex items-center justify-center p-3 bg-blue-600/20 rounded-full mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-400" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-bold text-white tracking-tight">AI-Powered Asset QA Tool</h1>
+            <p class="text-gray-400 mt-3 text-lg max-w-2xl mx-auto">
+                Powered by <strong>Gemini 3.0 Pro</strong>.<br>
+                Validate copy, check compliance, and maintain brand consistency.
+            </p>
+        </header>
 
-                <label for="copy-input" class="block text-md font-semibold mb-3 text-gray-200 flex items-center gap-2">
-                    <span class="bg-purple-500/20 w-6 h-6 rounded flex items-center justify-center text-xs text-purple-400">4</span>
-                    Additional Context
-                </label>
-                <textarea id="copy-input" rows="2" class="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition text-sm text-white placeholder-gray-600" placeholder="e.g., 'Check that the disclaimer is present'."></textarea>
-                
-                <div class="mt-4">
-                    <label class="block text-xs font-semibold text-gray-400 mb-2">QA Strictness</label>
-                    <select id="strictness-selector" class="w-full p-2 bg-gray-900 border border-gray-600 rounded text-sm text-white">
-                        <option value="standard">Standard (Balance Speed & Accuracy)</option>
-                        <option value="strict" selected>Strict (Pixel-Perfect Compliance)</option>
-                        <option value="lenient">Lenient (Major Issues Only)</option>
-                    </select>
-                </div>
+        <!-- API Key -->
+        <div class="mb-8 max-w-xl mx-auto bg-gray-800/50 p-4 rounded-xl border border-gray-700/50 backdrop-blur-sm">
+            <label for="api-key-input" class="block text-sm font-semibold text-gray-300 mb-2">Gemini API Key</label>
+            <div class="flex gap-2">
+                <input id="api-key-input" type="password"
+                    placeholder="Paste your Gemini API key here (Starts with AIza...)"
+                    class="flex-1 p-2.5 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm text-white placeholder-gray-600">
+                <button id="save-api-key-btn"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm whitespace-nowrap">Save
+                    Key</button>
+            </div>
+            <div id="api-key-status" class="mt-2 text-xs text-green-400 hidden flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd" />
+                </svg>
+                Key saved locally
+            </div>
+        </div>
 
-                <button id="analyze-button" class="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:from-gray-600 disabled:to-gray-600 flex items-center justify-center gap-2">
-                    <span>Run Analysis</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+        <!-- Preview Modal -->
+        <div id="preview-modal"
+            class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+            <div class="relative bg-gray-900 rounded-xl max-w-4xl max-h-[90vh] w-full">
+                <button id="close-preview"
+                    class="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white rounded-full w-10 h-10 flex items-center justify-center z-10 transition">
+                    ×
                 </button>
+                <div id="preview-content" class="p-6 overflow-auto max-h-[90vh]">
+                </div>
             </div>
         </div>
 
-        <!-- Right Column: Analysis & Feedback (8 cols) -->
-        <div class="lg:col-span-8 space-y-6">
-            <!-- Analysis Results -->
-             <div class="bg-gray-800 rounded-xl shadow-xl border border-gray-700/50 overflow-hidden flex flex-col h-[600px]">
-                <div class="p-4 bg-gray-800/80 backdrop-blur border-b border-gray-700 flex justify-between items-center">
-                    <h2 class="text-lg font-semibold text-gray-200 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
-                        Analysis Report
-                    </h2>
-                    <button id="clear-report-btn" class="text-xs text-gray-500 hover:text-gray-300 transition hidden">Clear Report</button>
-                </div>
-                
-                <div id="analysis-output" class="flex-grow p-6 overflow-y-auto bg-gray-900/50 relative">
-                    <!-- Placeholder State -->
-                    <div id="analysis-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-center text-gray-500">
-                        <div class="bg-gray-800/50 p-6 rounded-full mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left Column: Inputs (4 cols) -->
+            <div class="lg:col-span-4 space-y-6">
+                <!-- Upload Section -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700/50">
+                    <div class="space-y-6">
+                        <!-- Assets -->
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-md font-semibold text-blue-400 flex items-center gap-2">
+                                    <span
+                                        class="bg-blue-500/20 w-6 h-6 rounded flex items-center justify-center text-xs">1</span>
+                                    Assets to Check
+                                </h3>
+                                <span id="asset-count" class="text-xs text-gray-500">0 files</span>
+                            </div>
+                            <label for="asset-upload"
+                                class="group w-full flex flex-col items-center justify-center h-32 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer hover:border-blue-500 hover:bg-gray-700/50 transition-all">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <svg class="w-8 h-8 mb-3 text-gray-400 group-hover:text-blue-400 transition-colors"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                                        </path>
+                                    </svg>
+                                    <p class="text-sm text-gray-400"><span class="font-semibold">Click to upload</span>
+                                        or drag and drop</p>
+                                    <p class="text-xs text-gray-500 mt-1">Images or MP4 Video</p>
+                                </div>
+                                <input type="file" id="asset-upload" accept="image/*,video/mp4" class="hidden"
+                                    multiple />
+                            </label>
+                            <div id="asset-previews" class="mt-3 grid grid-cols-3 gap-2 min-h-[20px]"></div>
                         </div>
-                        <p class="text-lg font-medium text-gray-400">Ready to Analyze</p>
-                        <p class="text-sm max-w-xs mt-2">Upload your assets and references on the left, set your Market (e.g. "UAE"), then click "Run Analysis".</p>
-                    </div>
-                </div>
-             </div>
 
-             <!-- Feedback & History Split -->
-             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <!-- Human Feedback -->
-                 <div class="bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-700/50">
-                     <div class="flex items-center justify-between mb-3">
-                         <h3 class="text-md font-semibold text-yellow-400 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                            Teach the AI
-                         </h3>
-                         <div class="space-x-1">
-                            <button id="undo-feedback-button" class="text-gray-500 hover:text-white p-1 rounded disabled:opacity-30" disabled title="Undo">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
-                            </button>
-                            <button id="redo-feedback-button" class="text-gray-500 hover:text-white p-1 rounded disabled:opacity-30" disabled title="Redo">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" /></svg>
-                            </button>
+                        <div class="border-t border-gray-700/50"></div>
+
+                        <!-- References -->
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-md font-semibold text-green-400 flex items-center gap-2">
+                                    <span
+                                        class="bg-green-500/20 w-6 h-6 rounded flex items-center justify-center text-xs">2</span>
+                                    Reference Material
+                                </h3>
+                                <span id="ref-count" class="text-xs text-gray-500">0 files</span>
+                            </div>
+                            <label for="reference-asset-upload"
+                                class="group w-full flex flex-col items-center justify-center h-24 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer hover:border-green-500 hover:bg-gray-700/50 transition-all">
+                                <div class="flex flex-col items-center justify-center">
+                                    <p class="text-sm text-gray-400 group-hover:text-green-400 transition-colors"><span
+                                            class="font-semibold">Upload References</span></p>
+                                    <p class="text-xs text-gray-500 mt-1">Style guides, approved copy (PDF/Img)</p>
+                                </div>
+                                <input type="file" id="reference-asset-upload" accept="image/*,application/pdf"
+                                    class="hidden" multiple />
+                            </label>
+                            <div id="reference-previews" class="mt-3 grid grid-cols-3 gap-2 min-h-[20px]"></div>
                         </div>
-                     </div>
-                     
-                     <!-- New Feature: Extract Rules -->
-                     <button id="extract-rules-btn" class="w-full mb-4 bg-gradient-to-r from-yellow-700 to-yellow-600 hover:from-yellow-600 hover:to-yellow-500 text-white text-xs font-bold py-2 px-3 rounded transition flex items-center justify-center gap-2 border border-yellow-500/30">
-                        <span>✨ Extract Rules from Refs</span>
-                     </button>
-
-                     <p class="text-xs text-gray-400 mb-3">Or add manual rules:</p>
-                     
-                     <div class="flex gap-2 mb-3">
-                         <input id="human-feedback-input" type="text" class="flex-1 p-2 bg-gray-900 border border-gray-600 rounded text-sm text-white placeholder-gray-600 focus:ring-1 focus:ring-yellow-500 focus:border-transparent" placeholder="e.g. 'Logo must be white'">
-                         <button id="save-feedback-button" class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors">Add</button>
-                     </div>
-
-                     <div id="active-feedback-list" class="bg-gray-900/50 rounded-lg p-2 space-y-2 overflow-y-auto h-32 no-scrollbar border border-gray-700/30">
-                        <p class="text-gray-500 text-center text-xs py-10 italic">No active rules.</p>
-                     </div>
-                 </div>
-
-                 <!-- History -->
-                 <div class="bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-700/50 flex flex-col">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-md font-semibold text-purple-400 flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            History
-                        </h3>
-                        <input id="history-search" type="text" placeholder="Filter..." class="w-24 p-1 bg-gray-900 border border-gray-700 rounded text-xs text-white focus:ring-1 focus:ring-purple-500 transition" />
-                    </div>
-                    <div id="review-history-list" class="flex-grow bg-gray-900/50 rounded-lg p-2 space-y-2 overflow-y-auto h-48 no-scrollbar border border-gray-700/30">
-                        <p class="text-gray-500 text-center text-xs py-16 italic">No past reviews.</p>
                     </div>
                 </div>
-             </div>
+
+                <!-- Context & Action -->
+                <div class="bg-gray-800 p-6 rounded-xl shadow-xl border border-gray-700/50">
+                    <!-- NEW: Market Selector -->
+                    <div class="mb-4">
+                        <label for="market-input"
+                            class="block text-md font-semibold mb-2 text-gray-200 flex items-center gap-2">
+                            <span
+                                class="bg-purple-500/20 w-6 h-6 rounded flex items-center justify-center text-xs text-purple-400">3</span>
+                            Target Market / Locale
+                        </label>
+                        <input id="market-input" type="text"
+                            class="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition text-sm text-white placeholder-gray-600"
+                            placeholder="e.g., 'UAE', 'KSA', 'AEEN', 'SAAR'">
+                        <p class="text-xs text-gray-500 mt-1">Specify the market to ensure the AI checks the correct
+                            reference column.</p>
+                    </div>
+
+                    <label for="copy-input"
+                        class="block text-md font-semibold mb-3 text-gray-200 flex items-center gap-2">
+                        <span
+                            class="bg-purple-500/20 w-6 h-6 rounded flex items-center justify-center text-xs text-purple-400">4</span>
+                        Additional Context
+                    </label>
+                    <textarea id="copy-input" rows="2"
+                        class="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition text-sm text-white placeholder-gray-600"
+                        placeholder="e.g., 'Check that the disclaimer is present'."></textarea>
+
+                    <div class="mt-4">
+                        <label class="block text-xs font-semibold text-gray-400 mb-2">QA Strictness</label>
+                        <select id="strictness-selector"
+                            class="w-full p-2 bg-gray-900 border border-gray-600 rounded text-sm text-white">
+                            <option value="standard">Standard (Balance Speed & Accuracy)</option>
+                            <option value="strict" selected>Strict (Pixel-Perfect Compliance)</option>
+                            <option value="lenient">Lenient (Major Issues Only)</option>
+                        </select>
+                    </div>
+
+                    <button id="analyze-button"
+                        class="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100 disabled:from-gray-600 disabled:to-gray-600 flex items-center justify-center gap-2">
+                        <span>Run Analysis</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Column: Analysis & Feedback (8 cols) -->
+            <div class="lg:col-span-8 space-y-6">
+                <!-- Analysis Results -->
+                <div
+                    class="bg-gray-800 rounded-xl shadow-xl border border-gray-700/50 overflow-hidden flex flex-col h-[600px]">
+                    <div
+                        class="p-4 bg-gray-800/80 backdrop-blur border-b border-gray-700 flex justify-between items-center">
+                        <h2 class="text-lg font-semibold text-gray-200 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-400" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
+                            Analysis Report
+                        </h2>
+                        <button id="clear-report-btn"
+                            class="text-xs text-gray-500 hover:text-gray-300 transition hidden">Clear Report</button>
+                    </div>
+
+                    <div id="analysis-output" class="flex-grow p-6 overflow-y-auto bg-gray-900/50 relative">
+                        <!-- Placeholder State -->
+                        <div id="analysis-placeholder"
+                            class="absolute inset-0 flex flex-col items-center justify-center text-center text-gray-500">
+                            <div class="bg-gray-800/50 p-6 rounded-full mb-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-600" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                                </svg>
+                            </div>
+                            <p class="text-lg font-medium text-gray-400">Ready to Analyze</p>
+                            <p class="text-sm max-w-xs mt-2">Upload your assets and references on the left, set your
+                                Market (e.g. "UAE"), then click "Run Analysis".</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback & History Split -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Human Feedback -->
+                    <div class="bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-700/50">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-md font-semibold text-yellow-400 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                Teach the AI
+                            </h3>
+                            <div class="space-x-1">
+                                <button id="undo-feedback-button"
+                                    class="text-gray-500 hover:text-white p-1 rounded disabled:opacity-30" disabled
+                                    title="Undo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                    </svg>
+                                </button>
+                                <button id="redo-feedback-button"
+                                    class="text-gray-500 hover:text-white p-1 rounded disabled:opacity-30" disabled
+                                    title="Redo">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- New Feature: Extract Rules -->
+                        <button id="extract-rules-btn"
+                            class="w-full mb-4 bg-gradient-to-r from-yellow-700 to-yellow-600 hover:from-yellow-600 hover:to-yellow-500 text-white text-xs font-bold py-2 px-3 rounded transition flex items-center justify-center gap-2 border border-yellow-500/30">
+                            <span>✨ Extract Rules from Refs</span>
+                        </button>
+
+                        <p class="text-xs text-gray-400 mb-3">Or add manual rules:</p>
+
+                        <div class="flex gap-2 mb-3">
+                            <input id="human-feedback-input" type="text"
+                                class="flex-1 p-2 bg-gray-900 border border-gray-600 rounded text-sm text-white placeholder-gray-600 focus:ring-1 focus:ring-yellow-500 focus:border-transparent"
+                                placeholder="e.g. 'Logo must be white'">
+                            <button id="save-feedback-button"
+                                class="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm font-medium transition-colors">Add</button>
+                        </div>
+
+                        <div id="active-feedback-list"
+                            class="bg-gray-900/50 rounded-lg p-2 space-y-2 overflow-y-auto h-32 no-scrollbar border border-gray-700/30">
+                            <p class="text-gray-500 text-center text-xs py-10 italic">No active rules.</p>
+                        </div>
+                    </div>
+
+                    <!-- History -->
+                    <div class="bg-gray-800 p-5 rounded-xl shadow-lg border border-gray-700/50 flex flex-col">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-md font-semibold text-purple-400 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                History
+                            </h3>
+                            <input id="history-search" type="text" placeholder="Filter..."
+                                class="w-24 p-1 bg-gray-900 border border-gray-700 rounded text-xs text-white focus:ring-1 focus:ring-purple-500 transition" />
+                        </div>
+                        <div id="review-history-list"
+                            class="flex-grow bg-gray-900/50 rounded-lg p-2 space-y-2 overflow-y-auto h-48 no-scrollbar border border-gray-700/30">
+                            <p class="text-gray-500 text-center text-xs py-16 italic">No past reviews.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<script type="module">
-    // Import Firebase modules
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-    import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
 
-    // --- CONFIGURATION ---
-    let firebaseConfig = null;
-    let appId = 'default-app-id';
-    
-    try {
-        if (typeof __firebase_config !== 'undefined') {
-            firebaseConfig = JSON.parse(__firebase_config);
-        }
-        if (typeof __app_id !== 'undefined') {
-            appId = __app_id;
-        }
-    } catch(e) {
-        console.warn("Environment config not found. Running in LOCAL/MOCK mode.");
-    }
+        // --- CONFIGURATION ---
+        let firebaseConfig = null;
+        let appId = 'default-app-id';
 
-    // --- FIREBASE SETUP ---
-    let app, db, auth, currentUser = null;
-    
-    // --- UTILS ---
-    const sanitize = (text) => text ? text.replace(/[<>]/g, '') : '';
-    const getEl = (id) => document.getElementById(id);
-    const cleanJSON = (text) => {
-        if (!text) return "";
-        // Remove markdown code blocks
-        let cleaned = text.replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/\s*```$/, "");
-        
-        // Aggressive cleaning: Extract the outermost JSON object
-        const firstBrace = cleaned.indexOf('{');
-        const lastBrace = cleaned.lastIndexOf('}');
-        if (firstBrace !== -1 && lastBrace !== -1) {
-            cleaned = cleaned.substring(firstBrace, lastBrace + 1);
-        }
-        return cleaned.trim();
-    };
-
-    // --- STATE ---
-    let state = {
-        assets: [],
-        references: [],
-        history: [],
-        feedback: [], 
-        undoStack: [],
-        redoStack: []
-    };
-
-    // Initialize if config exists
-    if (firebaseConfig) {
         try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            
-            const initAuth = async () => {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            };
-            
-            initAuth();
-
-            onAuthStateChanged(auth, (user) => {
-                currentUser = user;
-                if (user) {
-                    updateUI();
-                }
-            });
-        } catch(e) {
-            console.error("Firebase Init Failed:", e);
+            if (typeof __firebase_config !== 'undefined') {
+                firebaseConfig = JSON.parse(__firebase_config);
+            }
+            if (typeof __app_id !== 'undefined') {
+                appId = __app_id;
+            }
+        } catch (e) {
+            console.warn("Environment config not found. Running in LOCAL/MOCK mode.");
         }
-    }
 
-    // --- FIREBASE WRAPPERS ---
-    async function saveFeedback(text) {
-        if (!currentUser || !db) {
-            const id = 'local-' + Date.now();
-            state.feedback.push({ id, text, created: Date.now() });
-            return id;
-        }
-        const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'humanFeedback');
-        const docRef = await addDoc(colRef, { text, created: Date.now() });
-        return docRef.id;
-    }
+        // --- FIREBASE SETUP ---
+        let app, db, auth, currentUser = null;
 
-    async function getFeedback() {
-        if (!currentUser || !db) {
-            return state.feedback.sort((a, b) => a.created - b.created);
+        // --- UTILS ---
+        const sanitize = (text) => text ? text.replace(/[<>]/g, '') : '';
+        const getEl = (id) => document.getElementById(id);
+        const cleanJSON = (text) => {
+            if (!text) return "";
+            // Remove markdown code blocks
+            let cleaned = text.replace(/^```json\s*/i, "").replace(/^```\s*/, "").replace(/\s*```$/, "");
+
+            // Aggressive cleaning: Extract the outermost JSON object
+            const firstBrace = cleaned.indexOf('{');
+            const lastBrace = cleaned.lastIndexOf('}');
+            if (firstBrace !== -1 && lastBrace !== -1) {
+                cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+            }
+            return cleaned.trim();
+        };
+
+        // --- STATE ---
+        let state = {
+            assets: [],
+            references: [],
+            history: [],
+            feedback: [],
+            undoStack: [],
+            redoStack: []
+        };
+
+        // Initialize if config exists
+        if (firebaseConfig) {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                };
+
+                initAuth();
+
+                onAuthStateChanged(auth, (user) => {
+                    currentUser = user;
+                    if (user) {
+                        updateUI();
+                    }
+                });
+            } catch (e) {
+                console.error("Firebase Init Failed:", e);
+            }
         }
-        try {
+
+        // --- FIREBASE WRAPPERS ---
+        async function saveFeedback(text) {
+            if (!currentUser || !db) {
+                const id = 'local-' + Date.now();
+                state.feedback.push({ id, text, created: Date.now() });
+                return id;
+            }
             const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'humanFeedback');
-            const snap = await getDocs(colRef);
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            return data.sort((a, b) => a.created - b.created);
-        } catch(e) {
-            console.error("Error fetching feedback:", e);
-            return [];
+            const docRef = await addDoc(colRef, { text, created: Date.now() });
+            return docRef.id;
         }
-    }
 
-    async function deleteFeedback(id) {
-        if (!currentUser || !db) {
-            state.feedback = state.feedback.filter(f => f.id !== id);
-            return;
+        async function getFeedback() {
+            if (!currentUser || !db) {
+                return state.feedback.sort((a, b) => a.created - b.created);
+            }
+            try {
+                const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'humanFeedback');
+                const snap = await getDocs(colRef);
+                const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                return data.sort((a, b) => a.created - b.created);
+            } catch (e) {
+                console.error("Error fetching feedback:", e);
+                return [];
+            }
         }
-        const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'humanFeedback', id);
-        await deleteDoc(docRef);
-    }
 
-    async function saveHistory(item) {
-        if (!currentUser || !db) {
-            state.history.unshift({ ...item, created: Date.now() });
-            return;
+        async function deleteFeedback(id) {
+            if (!currentUser || !db) {
+                state.feedback = state.feedback.filter(f => f.id !== id);
+                return;
+            }
+            const docRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'humanFeedback', id);
+            await deleteDoc(docRef);
         }
-        const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'reviewHistory');
-        await addDoc(colRef, { ...item, created: Date.now() });
-    }
 
-    async function getHistory() {
-        if (!currentUser || !db) {
-            return state.history.sort((a, b) => b.created - a.created);
-        }
-        try {
+        async function saveHistory(item) {
+            if (!currentUser || !db) {
+                state.history.unshift({ ...item, created: Date.now() });
+                return;
+            }
             const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'reviewHistory');
-            const snap = await getDocs(colRef);
-            const data = snap.docs.map(d => d.data());
-            return data.sort((a, b) => b.created - a.created);
-        } catch(e) { 
-            console.error("Error fetching history:", e);
-            return [];
+            await addDoc(colRef, { ...item, created: Date.now() });
         }
-    }
 
-    // --- GEMINI API LOGIC ---
-    const MODELS = {
-        PREFERRED: 'gemini-3-pro-preview',
-        FALLBACK: 'gemini-2.0-flash'
-    };
+        async function getHistory() {
+            if (!currentUser || !db) {
+                return state.history.sort((a, b) => b.created - a.created);
+            }
+            try {
+                const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'reviewHistory');
+                const snap = await getDocs(colRef);
+                const data = snap.docs.map(d => d.data());
+                return data.sort((a, b) => b.created - a.created);
+            } catch (e) {
+                console.error("Error fetching history:", e);
+                return [];
+            }
+        }
 
-    function setApiKey(key) { localStorage.setItem('GEMINI_API_KEY', key); }
-    function getApiKey() { return localStorage.getItem('GEMINI_API_KEY') || ''; }
+        // --- GEMINI API LOGIC ---
+        const MODELS = {
+            PREFERRED: 'gemini-3-pro-preview',
+            FALLBACK: 'gemini-2.0-flash'
+        };
 
-    function getFileBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => resolve({ 
-                inlineData: { 
-                    mimeType: file.type, 
-                    data: e.target.result.split(',')[1] 
-                } 
+        function setApiKey(key) { localStorage.setItem('GEMINI_API_KEY', key); }
+        function getApiKey() { return localStorage.getItem('GEMINI_API_KEY') || ''; }
+
+        // Helper to resize image if it's too large (prevents payload issues)
+        function resizeImage(file, maxWidth = 1536) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth || height > maxWidth) {
+                            if (width > height) {
+                                height = Math.round(height * (maxWidth / width));
+                                width = maxWidth;
+                            } else {
+                                width = Math.round(width * (maxWidth / height));
+                                height = maxWidth;
+                            }
+                        } else {
+                            // No resize needed, return original base64 (minus prefix)
+                            resolve(e.target.result.split(',')[1]);
+                            return;
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Compress slightly to JPEG 0.85
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                        resolve(dataUrl.split(',')[1]);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
             });
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    }
+        }
 
-    async function callGeminiAPI(parts, schema = null, temperature = 0.2) {
-        let apiKey = getApiKey();
-        if (!apiKey) throw new Error('Please save your Gemini API Key first.');
-        
-        // Basic trim
-        apiKey = apiKey.trim();
-
-        const buildReq = (model) => ({
-            url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            body: {
-                contents: [{ role: 'user', parts }],
-                generationConfig: {
-                    temperature: temperature,
-                    maxOutputTokens: 16384, // Increased limit for detailed responses
-                    responseMimeType: schema ? 'application/json' : 'text/plain',
-                    responseSchema: schema
+        async function getFileBase64(file) {
+            if (file.type.startsWith('image/')) {
+                try {
+                    const base64Data = await resizeImage(file);
+                    return {
+                        inlineData: {
+                            data: base64Data,
+                            mimeType: 'image/jpeg' // Always convert to jpeg for consistency
+                        }
+                    };
+                } catch (e) {
+                    console.warn("Image resize failed, falling back to original:", e);
                 }
             }
-        });
 
-        // 1. Try Preferred Model
-        try {
-            const req = buildReq(MODELS.PREFERRED);
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve({
+                    inlineData: {
+                        data: reader.result.split(',')[1],
+                        mimeType: file.type
+                    }
+                });
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function callGeminiAPI(parts, schema = null, temperature = 0.2) {
+            let apiKey = getApiKey();
+            if (!apiKey) throw new Error('Please save your Gemini API Key first.');
+            apiKey = apiKey.trim();
+
+            const buildReq = (model) => ({
+                url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+                body: {
+                    contents: [{ role: 'user', parts }],
+                    generationConfig: {
+                        temperature: temperature,
+                        maxOutputTokens: 65536,
+                    }
+                }
+            });
+
+            const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            async function fetchWithRetry(url, body, retries = 3) {
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(body)
+                        });
+
+                        if (response.ok) return response;
+
+                        // Handle 429 (Too Many Requests) specifically
+                        if (response.status === 429) {
+                            const delay = Math.pow(2, i) * 1000 + (Math.random() * 1000); // Exponential backoff: 1s, 2s, 4s...
+                            console.warn(`Quota hit (429). Retrying in ${Math.round(delay)}ms...`);
+                            showNotification(`Quota limit hit. Retrying in ${Math.round(delay / 1000)}s...`, true);
+                            await wait(delay);
+                            continue;
+                        }
+
+                        // For other errors, throw immediately to let the caller handle fallback
+                        if (response.status === 400) {
+                            const errText = await response.text();
+                            if (errText.includes("API_KEY_INVALID") || errText.includes("API key not valid")) {
+                                throw new Error("Invalid API Key. Please check your settings and try again.");
+                            }
+                        }
+
+                        return response; // Return error response to be handled by caller
+                    } catch (e) {
+                        if (i === retries - 1) throw e;
+                        // Network errors, retry
+                        await wait(1000);
+                    }
+                }
+                throw new Error("Max retries exceeded");
+            }
+
+            // 1. Try Preferred Model with Retries
+            console.log(`[API Call] Attempting ${MODELS.PREFERRED}...`);
+            try {
+                const req = buildReq(MODELS.PREFERRED);
+                const response = await fetchWithRetry(req.url, req.body);
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.candidates && result.candidates.length > 0) {
+                        console.log(`[API Call] ✓ ${MODELS.PREFERRED} succeeded!`);
+                        return result;
+                    }
+                }
+
+                // If we get here, it's a non-OK response that wasn't a 429 (or retries exhausted)
+                const status = response.status;
+                console.warn(`[API Call] ${MODELS.PREFERRED} failed with status ${status}`);
+                if ([404, 503].includes(status)) {
+                    console.warn(`Model ${MODELS.PREFERRED} unavailable (${status}). Switching to fallback.`);
+                    showNotification(`Gemini 3.0 unavailable (${status}). Using fallback...`, true);
+                } else {
+                    const errText = await response.text();
+                    console.error(`[API Call] Error details: ${errText.substring(0, 200)}`);
+                    throw new Error(`API Error ${status}: ${errText}`);
+                }
+            } catch (e) {
+                if (e.message.includes("Invalid API Key")) throw e;
+                console.warn(`[API Call] ${MODELS.PREFERRED} exception:`, e.message);
+            }
+
+            // 2. Try Fallback Model
+            console.log(`[API Call] Attempting Fallback to ${MODELS.FALLBACK}...`);
+            showNotification(`Switching to ${MODELS.FALLBACK}...`, false);
+            const req = buildReq(MODELS.FALLBACK);
+
+            // We don't retry fallback as aggressively, or maybe we should? Let's do simple fetch for fallback.
             const response = await fetch(req.url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(req.body)
             });
 
-            if (response.ok) {
-                const result = await response.json();
-                if (result.candidates && result.candidates.length > 0) {
-                    return result;
+            if (!response.ok) {
+                const err = await response.text();
+                if (response.status === 400 && (err.includes("API_KEY_INVALID") || err.includes("API key not valid"))) {
+                    throw new Error("Invalid API Key. Please check your settings and try again.");
                 }
+                throw new Error(`Fallback API Error ${response.status}: ${err}`);
             }
 
-            // Immediate failure if the key is invalid (400)
-            if (response.status === 400) {
-                const errorText = await response.text();
-                if (errorText.includes("API_KEY_INVALID") || errorText.includes("API key not valid")) {
-                     throw new Error("Invalid API Key. Please check your settings and try again.");
-                }
-            }
-
-            // If specific retryable error codes, we let it fall through to catch block or simple if
-            if ([404, 429, 503].includes(response.status)) {
-                 console.warn(`Model ${MODELS.PREFERRED} unavailable (${response.status}). Switching to fallback.`);
-                 showNotification("Gemini 3.0 busy or quota limited. Using fallback...", true);
-            } else {
-                // Fatal error (e.g. other 400 Bad Request)
-                const errText = await response.text();
-                throw new Error(`API Error ${response.status}: ${errText}`);
-            }
-        } catch (e) {
-            // If it's the invalid key error we just threw, stop here.
-            if (e.message.includes("Invalid API Key")) throw e;
-            
-            // Network error or handled error above -> Fallback
-            console.warn("Primary model attempt failed:", e);
+            return await response.json();
         }
 
-        // 2. Try Fallback Model
-        console.log(`Attempting Fallback to ${MODELS.FALLBACK}`);
-        const req = buildReq(MODELS.FALLBACK);
-        const response = await fetch(req.url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(req.body)
-        });
+        // --- FEATURES USING NEW WRAPPER ---
 
-        if (!response.ok) {
-            const err = await response.text();
-             // Check for invalid key here too
-            if (response.status === 400 && (err.includes("API_KEY_INVALID") || err.includes("API key not valid"))) {
-                 throw new Error("Invalid API Key. Please check your settings and try again.");
-            }
-            throw new Error(`Fallback API Error ${response.status}: ${err}`);
+        async function extractRulesFromReferences(refFiles) {
+            const refParts = await Promise.all(refFiles.map(getFileBase64));
+            const parts = [
+                { text: "You are an expert Creative Director. Analyze these Reference Files (style guides, approved visuals)." },
+                ...refParts,
+                { text: "Extract 3 to 5 critical visual or copy compliance rules that should be enforced for all future assets based on these references. Return ONLY a raw JSON list of strings, e.g., [\"Logo must be top right\", \"Disclaimer font size 10px\"]." }
+            ];
+
+            const result = await callGeminiAPI(parts, {
+                type: "ARRAY",
+                items: { type: "STRING" }
+            }, 0.2);
+
+            const text = result.candidates[0].content.parts[0].text;
+            return JSON.parse(cleanJSON(text));
         }
 
-        return await response.json();
-    }
-
-    // --- FEATURES USING NEW WRAPPER ---
-
-    async function extractRulesFromReferences(refFiles) {
-        const refParts = await Promise.all(refFiles.map(getFileBase64));
-        const parts = [
-            { text: "You are an expert Creative Director. Analyze these Reference Files (style guides, approved visuals)." },
-            ...refParts,
-            { text: "Extract 3 to 5 critical visual or copy compliance rules that should be enforced for all future assets based on these references. Return ONLY a raw JSON list of strings, e.g., [\"Logo must be top right\", \"Disclaimer font size 10px\"]." }
-        ];
-
-        const result = await callGeminiAPI(parts, {
-            type: "ARRAY",
-            items: { type: "STRING" }
-        }, 0.2);
-        
-        const text = result.candidates[0].content.parts[0].text;
-        return JSON.parse(cleanJSON(text));
-    }
-
-    async function getCopyFix(assetText, refText, note) {
-        const parts = [{ text: `
+        async function getCopyFix(assetText, refText, note) {
+            const parts = [{
+                text: `
             Task: Fix the following text to comply with the reference.
             
             Failed Text from Asset: "${assetText}"
@@ -540,36 +820,36 @@
             Output ONLY the corrected text string, nothing else.
         ` }];
 
-        const result = await callGeminiAPI(parts, null, 0.2);
-        return result.candidates[0].content.parts[0].text.trim();
-    }
-
-    async function analyzeAsset(assetFile, refFiles, promptText) {
-        const mainPart = await getFileBase64(assetFile);
-        const refParts = await Promise.all(refFiles.map(getFileBase64));
-        
-        const feedbackData = await getFeedback();
-        const feedbackText = feedbackData.map(f => `- ${f.text}`).join('\n');
-
-        const strictness = getEl('strictness-selector').value;
-        const targetMarket = getEl('market-input').value.trim();
-        
-        let strictnessInstruction = "";
-        if(strictness === 'strict') {
-            strictnessInstruction = "You are a STRICT Compliance Auditor. Flag EVERY minor discrepancy (pixel misalignment, font weight, slight color shifts). Zero tolerance for errors.";
-        } else if (strictness === 'lenient') {
-            strictnessInstruction = "You are a Lenient Reviewer. Ignore minor visual polish issues. Only flag major copy errors, missing logos, or brand violations.";
-        } else {
-            strictnessInstruction = "You are a Standard QA Agent. Balance visual accuracy with copy correctness.";
+            const result = await callGeminiAPI(parts, null, 0.2);
+            return result.candidates[0].content.parts[0].text.trim();
         }
 
-        const marketInstruction = targetMarket 
-            ? `**CRITICAL TARGET MARKET**: The user specifically wants to check compliance for: "${targetMarket}". 
+        async function analyzeAsset(assetFile, refFiles, promptText) {
+            const mainPart = await getFileBase64(assetFile);
+            const refParts = await Promise.all(refFiles.map(getFileBase64));
+
+            const feedbackData = await getFeedback();
+            const feedbackText = feedbackData.map(f => `- ${f.text}`).join('\n');
+
+            const strictness = getEl('strictness-selector').value;
+            const targetMarket = getEl('market-input').value.trim();
+
+            let strictnessInstruction = "";
+            if (strictness === 'strict') {
+                strictnessInstruction = "You are a STRICT Compliance Auditor. Flag EVERY minor discrepancy (pixel misalignment, font weight, slight color shifts). Zero tolerance for errors.";
+            } else if (strictness === 'lenient') {
+                strictnessInstruction = "You are a Lenient Reviewer. Ignore minor visual polish issues. Only flag major copy errors, missing logos, or brand violations.";
+            } else {
+                strictnessInstruction = "You are a Standard QA Agent. Balance visual accuracy with copy correctness.";
+            }
+
+            const marketInstruction = targetMarket
+                ? `**CRITICAL TARGET MARKET**: The user specifically wants to check compliance for: "${targetMarket}". 
                - You MUST ignore reference copy belonging to other markets (e.g. if user says 'UAE' or 'AE', ignore 'US', 'PL', 'SA' columns).
                - Look for headers like 'AEEN' (UAE English), 'AEAR' (UAE Arabic), 'SAEN' (KSA English), 'SAAR' (KSA Arabic) in the reference tables.`
-            : `**TARGET MARKET**: General/Global. Use all available reference data.`;
+                : `**TARGET MARKET**: General/Global. Use all available reference data.`;
 
-        const systemInstructions = `
+            const systemInstructions = `
         **Role:** ${strictnessInstruction}
         **Goal:** Analyze "Primary Asset" against "Reference Assets".
         
@@ -581,16 +861,16 @@
         **PROCESS:**
         1. **Deep Visual Scan:** Compare layout, logo placement, colors, and fonts.
         2. **OCR & Copy Check:** Read ALL text on the Primary Asset. Match against the *correct* market column in Reference Assets.
-        3. **Reasoning Trace:** Before deciding PASS/FAIL, you MUST explain your logic in the 'reasoning_trace' field.
+        3. **Reasoning Trace:** Before deciding PASS/FAIL, you MUST explain your logic in the 'reasoning_trace' field. **KEEP IT EXTREMELY CONCISE (Max 2-3 sentences).**
         4. **Final Output:** Return strictly JSON.
         `;
 
-        const userPrompt = `
+            const userPrompt = `
         **User Instructions:** ${promptText || "Perform standard QA."}
         
         **Output JSON Format:**
         {
-            "reasoning_trace": "Step-by-step explanation of what you checked and why.",
+            "reasoning_trace": "EXTREMELY CONCISE explanation (max 50 words).",
             "overallVerdict": "Approved" | "Needs Revision" | "Rejected",
             "summary": "Short executive summary.",
             "keyPoints": [ { "point": "observation", "status": "pass"|"fail"|"info" } ],
@@ -606,127 +886,190 @@
         }
         `;
 
-        const parts = [
-            { text: systemInstructions },
-            { text: "\n--- REFERENCES ---" },
-            ...refParts,
-            { text: "\n--- PRIMARY ASSET ---" },
-            mainPart,
-            { text: userPrompt }
-        ];
+            const parts = [
+                { text: systemInstructions },
+                { text: "\n--- REFERENCES ---" },
+                ...refParts,
+                { text: "\n--- PRIMARY ASSET ---" },
+                mainPart,
+                { text: userPrompt }
+            ];
 
-        const result = await callGeminiAPI(parts, {
-            type: "OBJECT",
-            properties: {
-                reasoning_trace: { type: "STRING" },
-                overallVerdict: { type: "STRING", enum: ["Approved", "Needs Revision", "Rejected"] },
-                summary: { type: "STRING" },
-                keyPoints: {
-                    type: "ARRAY",
-                    items: {
-                        type: "OBJECT",
-                        properties: {
-                            point: { type: "STRING" },
-                            status: { type: "STRING", enum: ["pass", "fail", "info"] }
-                        }
-                    }
-                },
-                copyAnalysis: {
-                    type: "ARRAY",
-                    items: {
-                        type: "OBJECT",
-                        properties: {
-                            assetText: { type: "STRING" },
-                            confidenceScore: { type: "NUMBER" },
-                            correspondingTrackerText: { type: "STRING" },
-                            trackerStatus: { type: "STRING", enum: ["pass", "fail"] },
-                            qualityNote: { type: "STRING" }
-                        }
-                    }
+            try {
+                const result = await callGeminiAPI(parts, null, 0.2);
+
+
+                if (!result.candidates || result.candidates.length === 0) {
+                    throw new Error("No candidates returned. The model might have blocked the request.");
                 }
+
+                const candidate = result.candidates[0];
+                if (candidate.finishReason !== "STOP") {
+                    console.warn("Model finish reason:", candidate.finishReason);
+                    if (candidate.finishReason === "SAFETY") {
+                        throw new Error("Safety Filter Triggered. The model refused to process the image.");
+                    }
+                    if (candidate.finishReason === "RECITATION") {
+                        throw new Error("Recitation Filter Triggered. The content might be copyrighted.");
+                    }
+                    throw new Error(`Model did not finish successfully. Reason: ${candidate.finishReason}`);
+                }
+
+                if (!candidate.content || !candidate.content.parts || !candidate.content.parts[0] || !candidate.content.parts[0].text) {
+                    throw new Error(`Empty response content. Finish Reason: ${candidate.finishReason}`);
+                }
+
+                const text = candidate.content.parts[0].text;
+                try {
+                    return JSON.parse(cleanJSON(text));
+                } catch (e) {
+                    console.error("JSON Parse Error:", e, text);
+                    throw new Error("Malformed JSON: " + text.substring(0, 200) + "...");
+                }
+
+            } catch (e) {
+                console.error("Analysis Failed:", e);
+                return {
+                    reasoning_trace: `Analysis Failed. Details: ${e.message}`,
+                    overallVerdict: "Needs Revision",
+                    summary: `Error: ${e.message}`,
+                    keyPoints: [],
+                    copyAnalysis: []
+                };
             }
-        }, 0.0);
-        
-        const text = result.candidates[0].content.parts[0].text;
-        try {
-            return JSON.parse(cleanJSON(text));
-        } catch (e) {
-            console.error("JSON Parse Error:", e, text);
-            // Return a partial error object so the UI doesn't crash completely
-            return {
-                reasoning_trace: "Error parsing AI response. The output might have been truncated. Raw Text: " + text.substring(0, 500) + "...",
-                overallVerdict: "Needs Revision",
-                summary: "System Error: The AI response was malformed or incomplete.",
-                keyPoints: [],
-                copyAnalysis: []
-            };
         }
-    }
 
-    // --- UI RENDERING ---
-    const Icons = {
-        pass: '<span class="text-green-400">✅</span>',
-        fail: '<span class="text-red-400">❌</span>',
-        info: '<span class="text-blue-400">ℹ️</span>'
-    };
-
-    function showNotification(msg, isError=false) {
-        const notif = getEl('notification');
-        const txt = getEl('notification-message');
-        txt.textContent = msg;
-        notif.className = `fixed top-5 right-5 text-white py-2 px-5 rounded-lg shadow-lg transform transition-all duration-300 z-50 ${isError ? 'bg-red-600' : 'bg-green-600'}`;
-        setTimeout(() => notif.classList.add('translate-y-[-20px]', 'opacity-0'), 3000);
-        notif.classList.remove('translate-y-[-20px]', 'opacity-0');
-    }
-
-    function renderPreviews(files, containerId, type) {
-        const container = getEl(containerId);
-        container.innerHTML = '';
-        getEl(type === 'asset' ? 'asset-count' : 'ref-count').textContent = `${files.length} files`;
-        
-        files.forEach((file, idx) => {
-            const div = document.createElement('div');
-            div.className = 'thumbnail bg-gray-700 rounded-lg relative group';
-            
-            const btn = document.createElement('button');
-            btn.className = 'remove-btn absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition';
-            btn.textContent = '×';
-            btn.onclick = (e) => { 
-                e.stopPropagation(); 
-                if(type === 'asset') state.assets.splice(idx, 1);
-                else state.references.splice(idx, 1);
-                renderPreviews(type === 'asset' ? state.assets : state.references, containerId, type);
-            };
-            
-            if (file.type.includes('image')) {
-                const img = document.createElement('img');
-                img.className = 'w-full h-full object-cover rounded-lg';
-                const reader = new FileReader();
-                reader.onload = e => img.src = e.target.result;
-                reader.readAsDataURL(file);
-                div.appendChild(img);
-            } else {
-                 div.innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-400 text-xs break-all p-2">${file.name.slice(-8)}</div>`;
-            }
-            div.appendChild(btn);
-            container.appendChild(div);
-        });
-    }
-
-    function renderAnalysis(report, assetName) {
-        const container = getEl('analysis-output');
-        const placeholder = getEl('analysis-placeholder');
-        if(placeholder) placeholder.style.display = 'none';
-
-        const verdictColors = {
-            'Approved': 'bg-green-500/20 text-green-300 border-green-500/50',
-            'Needs Revision': 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50',
-            'Rejected': 'bg-red-500/20 text-red-300 border-red-500/50'
+        // --- UI RENDERING ---
+        const Icons = {
+            pass: '<span class="text-green-400">✅</span>',
+            fail: '<span class="text-red-400">❌</span>',
+            info: '<span class="text-blue-400">ℹ️</span>'
         };
-        const vColor = verdictColors[report.overallVerdict] || 'bg-gray-700 text-gray-300';
-        const reportId = 'report-' + Date.now();
 
-        const html = `
+        function showNotification(msg, isError = false) {
+            const notif = getEl('notification');
+            const txt = getEl('notification-message');
+            txt.textContent = msg;
+            notif.className = `fixed top-5 right-5 text-white py-2 px-5 rounded-lg shadow-lg transform transition-all duration-300 z-50 ${isError ? 'bg-red-600' : 'bg-green-600'}`;
+            setTimeout(() => notif.classList.add('translate-y-[-20px]', 'opacity-0'), 3000);
+            notif.classList.remove('translate-y-[-20px]', 'opacity-0');
+        }
+
+        function renderPreviews(files, containerId, type) {
+            const container = getEl(containerId);
+            container.innerHTML = '';
+            getEl(type === 'asset' ? 'asset-count' : 'ref-count').textContent = `${files.length} files`;
+
+            files.forEach((file, idx) => {
+                const div = document.createElement('div');
+                div.className = 'thumbnail bg-gray-700 rounded-lg relative group cursor-pointer hover:ring-2 hover:ring-blue-500 transition';
+
+                // Add click handler for preview
+                div.onclick = (e) => {
+                    if (e.target.classList.contains('remove-btn')) return; // Don't open on remove click
+                    openPreview(file);
+                };
+
+                const btn = document.createElement('button');
+                btn.className = 'remove-btn absolute top-1 right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition z-10';
+                btn.textContent = '×';
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (type === 'asset') state.assets.splice(idx, 1);
+                    else state.references.splice(idx, 1);
+                    renderPreviews(type === 'asset' ? state.assets : state.references, containerId, type);
+                };
+
+                if (file.type.includes('image')) {
+                    const img = document.createElement('img');
+                    img.className = 'w-full h-full object-cover rounded-lg';
+                    const reader = new FileReader();
+                    reader.onload = e => img.src = e.target.result;
+                    reader.readAsDataURL(file);
+                    div.appendChild(img);
+                } else {
+                    div.innerHTML = `<div class="w-full h-full flex items-center justify-center text-gray-400 text-xs break-all p-2">${file.name.slice(-8)}</div>`;
+                }
+                div.appendChild(btn);
+                container.appendChild(div);
+            });
+        }
+
+        function openPreview(file) {
+            const modal = getEl('preview-modal');
+            const content = getEl('preview-content');
+            modal.classList.remove('hidden');
+
+            if (file.type.includes('image')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    content.innerHTML = `
+                        <div class="flex flex-col items-center">
+                            <h3 class="text-white text-lg font-semibold mb-4">${sanitize(file.name)}</h3>
+                            <img src="${e.target.result}" class="max-w-full rounded-lg" />
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type.includes('video')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    content.innerHTML = `
+                        <div class="flex flex-col items-center">
+                            <h3 class="text-white text-lg font-semibold mb-4">${sanitize(file.name)}</h3>
+                            <video controls class="max-w-full rounded-lg">
+                                <source src="${e.target.result}" type="${file.type}">
+                            </video>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            } else if (file.type.includes('pdf')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    content.innerHTML = `
+                        <div class="flex flex-col items-center">
+                            <h3 class="text-white text-lg font-semibold mb-4">${sanitize(file.name)}</h3>
+                            <iframe src="${e.target.result}" class="w-full h-[70vh] rounded-lg border border-gray-700"></iframe>
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                content.innerHTML = `
+                    <div class="text-center text-gray-300">
+                        <h3 class="text-lg font-semibold mb-2">${sanitize(file.name)}</h3>
+                        <p>Preview not available for this file type.</p>
+                    </div>
+                `;
+            }
+        }
+
+        getEl('close-preview').onclick = () => {
+            getEl('preview-modal').classList.add('hidden');
+        };
+
+        // Close modal on backdrop click
+        getEl('preview-modal').onclick = (e) => {
+            if (e.target.id === 'preview-modal') {
+                getEl('preview-modal').classList.add('hidden');
+            }
+        };
+
+        function renderAnalysis(report, assetName) {
+            const container = getEl('analysis-output');
+            const placeholder = getEl('analysis-placeholder');
+            if (placeholder) placeholder.style.display = 'none';
+
+            const verdictColors = {
+                'Approved': 'bg-green-500/20 text-green-300 border-green-500/50',
+                'Needs Revision': 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50',
+                'Rejected': 'bg-red-500/20 text-red-300 border-red-500/50'
+            };
+            const vColor = verdictColors[report.overallVerdict] || 'bg-gray-700 text-gray-300';
+            const reportId = 'report-' + Date.now();
+
+            const html = `
             <div class="mb-6 animate-fade-in" id="${reportId}">
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -763,21 +1106,40 @@
                     <h4 class="text-sm font-semibold text-gray-300 mb-3 uppercase tracking-wide">Copy Validation</h4>
                     <div class="space-y-3">
                         ${report.copyAnalysis.map((c, idx) => {
-                            const hasErrorNote = (c.qualityNote || '').toLowerCase().includes('error');
-                            return `
+                const hasErrorNote = (c.qualityNote || '').toLowerCase().includes('error');
+                return `
                             <div class="border border-gray-700 rounded p-3 ${c.trackerStatus === 'fail' ? 'bg-red-900/10 border-red-900/30' : 'bg-green-900/10 border-green-900/30'} relative">
-                                <div class="flex justify-between text-xs text-gray-500 mb-1">
-                                    <span>Detected Text (${Math.round(c.confidenceScore*100)}% conf)</span>
+                                <div class="flex justify-between items-center text-xs mb-2">
+                                    <span class="text-gray-400">Detected Text</span>
                                     <div class="flex items-center gap-2">
+                                        ${(() => {
+                        const confPercent = Math.round(c.confidenceScore * 100);
+                        let badgeColor = 'bg-green-500/20 text-green-400 border-green-500/50';
+                        if (confPercent < 70) badgeColor = 'bg-red-500/20 text-red-400 border-red-500/50';
+                        else if (confPercent < 90) badgeColor = 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
+                        return `<span class="px-2 py-0.5 rounded border text-xs font-semibold ${badgeColor}">
+                                                ${confPercent}% confidence
+                                            </span>`;
+                    })()}
                                         <span class="${c.trackerStatus === 'pass' ? 'text-green-400' : 'text-red-400'} font-bold uppercase">${c.trackerStatus}</span>
                                     </div>
                                 </div>
-                                <p class="text-gray-200 font-medium mb-2 font-mono text-sm">"${sanitize(c.assetText)}"</p>
+                                <!-- Confidence Progress Bar -->
+                                <div class="w-full bg-gray-700 rounded-full h-1.5 mb-2">
+                                    ${(() => {
+                        const confPercent = Math.round(c.confidenceScore * 100);
+                        let barColor = 'bg-green-500';
+                        if (confPercent < 70) barColor = 'bg-red-500';
+                        else if (confPercent < 90) barColor = 'bg-yellow-500';
+                        return `<div class="${barColor} h-1.5 rounded-full transition-all" style="width: ${confPercent}%"></div>`;
+                    })()}
+                                </div>
+                                <p class="text-gray-200 font-medium mb-2 font-mono text-sm" ${/[\u0600-\u06FF\u0750-\u077F]/.test(c.assetText) ? 'dir="rtl"' : ''}>"${sanitize(c.assetText)}"</p>
                                 
                                 <div class="flex items-center gap-2 text-xs text-gray-500 mb-1">
                                     <span>↦ Match on Reference:</span>
                                 </div>
-                                <p class="text-gray-300 italic mb-2 text-sm">"${sanitize(c.correspondingTrackerText)}"</p>
+                                <p class="text-gray-300 italic mb-2 text-sm" ${/[\u0600-\u06FF\u0750-\u077F]/.test(c.correspondingTrackerText) ? 'dir="rtl"' : ''}>"${sanitize(c.correspondingTrackerText)}"</p>
 
                                 ${c.qualityNote ? `<p class="text-xs text-orange-300 mt-2 border-t border-gray-700/50 pt-2">⚠️ QA Note: ${sanitize(c.qualityNote)}</p>` : ''}
 
@@ -792,239 +1154,240 @@
                 </div>
             </div>
         `;
-        
-        const wrapper = document.createElement('div');
-        wrapper.innerHTML = html;
-        container.prepend(wrapper);
 
-        // Bind fix buttons
-        const reportEl = getEl(reportId);
-        reportEl.querySelectorAll('.fix-btn').forEach(btn => {
-            btn.onclick = async () => {
-                const assetText = btn.dataset.asset;
-                const refText = btn.dataset.ref;
-                const note = btn.dataset.note;
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            container.prepend(wrapper);
 
-                btn.disabled = true;
-                btn.textContent = "Thinking...";
+            // Bind fix buttons
+            const reportEl = getEl(reportId);
+            reportEl.querySelectorAll('.fix-btn').forEach(btn => {
+                btn.onclick = async () => {
+                    const assetText = btn.dataset.asset;
+                    const refText = btn.dataset.ref;
+                    const note = btn.dataset.note;
 
-                try {
-                    const suggestion = await getCopyFix(assetText, refText, note);
-                    getEl('fix-problem-text').textContent = note || "Copy mismatch detected.";
-                    getEl('fix-suggestion-text').textContent = suggestion;
-                    getEl('fix-modal').classList.remove('hidden');
-                } catch(e) {
-                    showNotification(e.message, true);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = "✨ Suggest Fix";
+                    btn.disabled = true;
+                    btn.textContent = "Thinking...";
+
+                    try {
+                        const suggestion = await getCopyFix(assetText, refText, note);
+                        getEl('fix-problem-text').textContent = note || "Copy mismatch detected.";
+                        getEl('fix-suggestion-text').textContent = suggestion;
+                        getEl('fix-modal').classList.remove('hidden');
+                    } catch (e) {
+                        showNotification(e.message, true);
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = "✨ Suggest Fix";
+                    }
                 }
-            }
-        });
+            });
 
-        // Bind Reasoning buttons
-        reportEl.querySelectorAll('.why-btn').forEach(btn => {
-            btn.onclick = () => {
-                const trace = btn.dataset.reasoning;
-                getEl('why-reasoning-text').textContent = trace;
-                getEl('why-modal-list').innerHTML = report.keyPoints.map(p => `<li>${sanitize(p.point)}</li>`).join('');
-                getEl('why-modal').classList.remove('hidden');
-            };
-        });
-    }
-
-    async function updateFeedbackUI() {
-        const list = await getFeedback();
-        const container = getEl('active-feedback-list');
-        container.innerHTML = '';
-        
-        if(list.length === 0) {
-            container.innerHTML = '<p class="text-gray-500 text-center text-xs py-4 italic">No active rules.</p>';
-            return;
+            // Bind Reasoning buttons
+            reportEl.querySelectorAll('.why-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const trace = btn.dataset.reasoning;
+                    getEl('why-reasoning-text').textContent = trace;
+                    getEl('why-modal-list').innerHTML = report.keyPoints.map(p => `<li>${sanitize(p.point)}</li>`).join('');
+                    getEl('why-modal').classList.remove('hidden');
+                };
+            });
         }
 
-        list.forEach(f => {
-            const div = document.createElement('div');
-            div.className = 'flex justify-between items-center bg-gray-800 p-2 rounded border border-gray-700 group';
-            div.innerHTML = `
+        async function updateFeedbackUI() {
+            const list = await getFeedback();
+            const container = getEl('active-feedback-list');
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center text-xs py-4 italic">No active rules.</p>';
+                return;
+            }
+
+            list.forEach(f => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center bg-gray-800 p-2 rounded border border-gray-700 group';
+                div.innerHTML = `
                 <span class="text-xs text-gray-300 truncate flex-1 mr-2" title="${sanitize(f.text)}">${sanitize(f.text)}</span>
             `;
-            const delBtn = document.createElement('button');
-            delBtn.className = 'text-red-500 hover:bg-red-500/20 p-1 rounded transition';
-            delBtn.innerHTML = '×';
-            delBtn.onclick = async () => {
-                await deleteFeedback(f.id);
-                state.undoStack.push({ action: 'delete', data: f });
-                state.redoStack = [];
-                updateUI();
-            };
-            div.appendChild(delBtn);
-            container.appendChild(div);
-        });
-    }
-
-    async function updateHistoryUI() {
-        let list = await getHistory();
-        const filter = getEl('history-search').value.toLowerCase();
-        if (filter) list = list.filter(i => i.assetName.toLowerCase().includes(filter));
-
-        const container = getEl('review-history-list');
-        container.innerHTML = '';
-
-        if(list.length === 0) {
-            container.innerHTML = '<p class="text-gray-500 text-center text-xs py-10 italic">No history found.</p>';
-            return;
+                const delBtn = document.createElement('button');
+                delBtn.className = 'text-red-500 hover:bg-red-500/20 p-1 rounded transition';
+                delBtn.innerHTML = '×';
+                delBtn.onclick = async () => {
+                    await deleteFeedback(f.id);
+                    state.undoStack.push({ action: 'delete', data: f });
+                    state.redoStack = [];
+                    updateUI();
+                };
+                div.appendChild(delBtn);
+                container.appendChild(div);
+            });
         }
 
-        list.forEach(h => {
-            const div = document.createElement('div');
-            div.className = 'p-2 bg-gray-800 rounded hover:bg-gray-700 cursor-pointer border border-gray-700/50 mb-2 transition-colors';
-            div.onclick = () => {
-                const out = getEl('analysis-output');
-                out.innerHTML = ''; // Clear current view
-                renderAnalysis(h.reportData, h.assetName); // Re-render report
-            };
-            div.innerHTML = `
+        async function updateHistoryUI() {
+            let list = await getHistory();
+            const filter = getEl('history-search').value.toLowerCase();
+            if (filter) list = list.filter(i => i.assetName.toLowerCase().includes(filter));
+
+            const container = getEl('review-history-list');
+            container.innerHTML = '';
+
+            if (list.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center text-xs py-10 italic">No history found.</p>';
+                return;
+            }
+
+            list.forEach(h => {
+                const div = document.createElement('div');
+                div.className = 'p-2 bg-gray-800 rounded hover:bg-gray-700 cursor-pointer border border-gray-700/50 mb-2 transition-colors';
+                div.onclick = () => {
+                    const out = getEl('analysis-output');
+                    out.innerHTML = ''; // Clear current view
+                    renderAnalysis(h.reportData, h.assetName); // Re-render report
+                };
+                div.innerHTML = `
                 <div class="flex justify-between text-xs mb-1">
                     <span class="font-semibold text-gray-300 truncate max-w-[100px]">${sanitize(h.assetName)}</span>
                     <span class="${h.verdict === 'Approved' ? 'text-green-400' : 'text-red-400'}">${h.verdict}</span>
                 </div>
                 <div class="text-[10px] text-gray-500">${new Date(h.created).toLocaleDateString()}</div>
             `;
-            container.appendChild(div);
-        });
-    }
-
-    function updateUI() {
-        updateFeedbackUI();
-        updateHistoryUI();
-        getEl('undo-feedback-button').disabled = state.undoStack.length === 0;
-        getEl('redo-feedback-button').disabled = state.redoStack.length === 0;
-    }
-
-    // --- EVENT LISTENERS ---
-    getEl('asset-upload').onchange = (e) => {
-        state.assets = [...state.assets, ...Array.from(e.target.files)];
-        renderPreviews(state.assets, 'asset-previews', 'asset');
-        e.target.value = '';
-    };
-
-    getEl('reference-asset-upload').onchange = (e) => {
-        state.references = [...state.references, ...Array.from(e.target.files)];
-        renderPreviews(state.references, 'reference-previews', 'ref');
-        e.target.value = '';
-    };
-
-    getEl('analyze-button').onclick = async () => {
-        if(state.assets.length === 0 || state.references.length === 0) {
-            showNotification('Please upload both assets and references.', true);
-            return;
+                container.appendChild(div);
+            });
         }
-        
-        const btn = getEl('analyze-button');
-        btn.disabled = true;
-        btn.innerHTML = `<div class="spinner border-2 border-white border-t-transparent h-5 w-5"></div> Processing...`;
-        
-        try {
-            for (const asset of state.assets) {
-                const report = await analyzeAsset(asset, state.references, getEl('copy-input').value);
-                renderAnalysis(report, asset.name);
-                
-                const historyItem = { 
-                    assetName: asset.name, 
-                    verdict: report.overallVerdict, 
-                    reportData: report 
-                };
-                await saveHistory(historyItem);
+
+        function updateUI() {
+            updateFeedbackUI();
+            updateHistoryUI();
+            getEl('undo-feedback-button').disabled = state.undoStack.length === 0;
+            getEl('redo-feedback-button').disabled = state.redoStack.length === 0;
+        }
+
+        // --- EVENT LISTENERS ---
+        getEl('asset-upload').onchange = (e) => {
+            state.assets = [...state.assets, ...Array.from(e.target.files)];
+            renderPreviews(state.assets, 'asset-previews', 'asset');
+            e.target.value = '';
+        };
+
+        getEl('reference-asset-upload').onchange = (e) => {
+            state.references = [...state.references, ...Array.from(e.target.files)];
+            renderPreviews(state.references, 'reference-previews', 'ref');
+            e.target.value = '';
+        };
+
+        getEl('analyze-button').onclick = async () => {
+            if (state.assets.length === 0 || state.references.length === 0) {
+                showNotification('Please upload both assets and references.', true);
+                return;
             }
-            updateUI();
-            showNotification('Analysis Complete!');
-        } catch(e) {
-            console.error(e);
-            showNotification(e.message, true);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = `Run Analysis`;
-        }
-    };
 
-    // Extract Rules Button
-    getEl('extract-rules-btn').onclick = async () => {
-        if (state.references.length === 0) {
-            showNotification("Please upload reference files first.", true);
-            return;
-        }
-        const btn = getEl('extract-rules-btn');
-        btn.disabled = true;
-        btn.textContent = "Extracting...";
+            const btn = getEl('analyze-button');
+            btn.disabled = true;
+            btn.innerHTML = `<div class="spinner border-2 border-white border-t-transparent h-5 w-5"></div> Processing...`;
 
-        try {
-            const rules = await extractRulesFromReferences(state.references);
-            for (const rule of rules) {
-                await saveFeedback(rule);
+            try {
+                for (const asset of state.assets) {
+                    const report = await analyzeAsset(asset, state.references, getEl('copy-input').value);
+                    renderAnalysis(report, asset.name);
+
+                    const historyItem = {
+                        assetName: asset.name,
+                        verdict: report.overallVerdict,
+                        reportData: report
+                    };
+                    await saveHistory(historyItem);
+                }
+                updateUI();
+                showNotification('Analysis Complete!');
+            } catch (e) {
+                console.error(e);
+                showNotification(e.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `Run Analysis`;
             }
+        };
+
+        // Extract Rules Button
+        getEl('extract-rules-btn').onclick = async () => {
+            if (state.references.length === 0) {
+                showNotification("Please upload reference files first.", true);
+                return;
+            }
+            const btn = getEl('extract-rules-btn');
+            btn.disabled = true;
+            btn.textContent = "Extracting...";
+
+            try {
+                const rules = await extractRulesFromReferences(state.references);
+                for (const rule of rules) {
+                    await saveFeedback(rule);
+                }
+                updateUI();
+                showNotification(`Extracted ${rules.length} rules!`);
+            } catch (e) {
+                showNotification(e.message, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "<span>✨ Extract Rules from Refs</span>";
+            }
+        };
+
+        getEl('save-feedback-button').onclick = async () => {
+            const input = getEl('human-feedback-input');
+            const val = input.value.trim();
+            if (!val) return;
+
+            const id = await saveFeedback(val);
+            if (id) {
+                state.undoStack.push({ action: 'add', data: { id, text: val } });
+                state.redoStack = [];
+                input.value = '';
+                updateUI();
+            }
+        };
+
+        getEl('save-api-key-btn').onclick = () => {
+            const key = getEl('api-key-input').value.trim();
+            if (key) {
+                setApiKey(key);
+                const status = getEl('api-key-status');
+                status.classList.remove('hidden');
+                setTimeout(() => status.classList.add('hidden'), 3000);
+            }
+        };
+
+        getEl('undo-feedback-button').onclick = async () => {
+            const act = state.undoStack.pop();
+            if (!act) return;
+
+            if (act.action === 'add') await deleteFeedback(act.data.id);
+            else await saveFeedback(act.data.text); // simplistic restore (ID changes)
+
+            state.redoStack.push(act);
             updateUI();
-            showNotification(`Extracted ${rules.length} rules!`);
-        } catch(e) {
-            showNotification(e.message, true);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = "<span>✨ Extract Rules from Refs</span>";
-        }
-    };
+        };
 
-    getEl('save-feedback-button').onclick = async () => {
-        const input = getEl('human-feedback-input');
-        const val = input.value.trim();
-        if(!val) return;
-        
-        const id = await saveFeedback(val);
-        if (id) {
-            state.undoStack.push({ action: 'add', data: {id, text: val} });
-            state.redoStack = [];
-            input.value = '';
-            updateUI();
-        }
-    };
+        getEl('history-search').oninput = updateUI;
 
-    getEl('save-api-key-btn').onclick = () => {
-        const key = getEl('api-key-input').value.trim();
-        if(key) {
-            setApiKey(key);
-            const status = getEl('api-key-status');
-            status.classList.remove('hidden');
-            setTimeout(() => status.classList.add('hidden'), 3000);
-        }
-    };
+        // Fix Modal
+        getEl('fix-modal-close').onclick = () => getEl('fix-modal').classList.add('hidden');
+        getEl('copy-fix-btn').onclick = () => {
+            const text = getEl('fix-suggestion-text').textContent;
+            navigator.clipboard.writeText(text);
+            showNotification("Copied to clipboard!");
+        };
 
-    getEl('undo-feedback-button').onclick = async () => {
-        const act = state.undoStack.pop();
-        if(!act) return;
-        
-        if(act.action === 'add') await deleteFeedback(act.data.id);
-        else await saveFeedback(act.data.text); // simplistic restore (ID changes)
-        
-        state.redoStack.push(act);
+        // Why Modal
+        getEl('why-modal-close').onclick = () => getEl('why-modal').classList.add('hidden');
+
+        // --- INIT ---
+        getEl('api-key-input').value = getApiKey();
+        // Force initial render to show empty states
         updateUI();
-    };
-
-    getEl('history-search').oninput = updateUI;
-    
-    // Fix Modal
-    getEl('fix-modal-close').onclick = () => getEl('fix-modal').classList.add('hidden');
-    getEl('copy-fix-btn').onclick = () => {
-        const text = getEl('fix-suggestion-text').textContent;
-        navigator.clipboard.writeText(text);
-        showNotification("Copied to clipboard!");
-    };
-    
-    // Why Modal
-    getEl('why-modal-close').onclick = () => getEl('why-modal').classList.add('hidden');
-
-    // --- INIT ---
-    getEl('api-key-input').value = getApiKey();
-    // Force initial render to show empty states
-    updateUI();
-</script>
+    </script>
 </body>
+
 </html>
