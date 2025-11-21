@@ -312,6 +312,25 @@
                             reference column.</p>
                     </div>
 
+                    <!-- NEW: Language Selector -->
+                    <div class="mb-4">
+                        <label for="language-selector"
+                            class="block text-md font-semibold mb-2 text-gray-200 flex items-center gap-2">
+                            <span
+                                class="bg-blue-500/20 w-6 h-6 rounded flex items-center justify-center text-xs text-blue-400">🌐</span>
+                            Expected Language
+                        </label>
+                        <select id="language-selector"
+                            class="w-full p-3 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm text-white">
+                            <option value="en">English</option>
+                            <option value="ar">Arabic (العربية)</option>
+                            <option value="fr">French (Français)</option>
+                            <option value="de">German (Deutsch)</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">AI will validate copy in this language. Brand/product
+                            names in English are allowed.</p>
+                    </div>
+
                     <label for="copy-input"
                         class="block text-md font-semibold mb-3 text-gray-200 flex items-center gap-2">
                         <span
@@ -833,6 +852,7 @@
 
             const strictness = getEl('strictness-selector').value;
             const targetMarket = getEl('market-input').value.trim();
+            const selectedLanguage = getEl('language-selector').value;
 
             let strictnessInstruction = "";
             if (strictness === 'strict') {
@@ -849,11 +869,27 @@
                - Look for headers like 'AEEN' (UAE English), 'AEAR' (UAE Arabic), 'SAEN' (KSA English), 'SAAR' (KSA Arabic) in the reference tables.`
                 : `**TARGET MARKET**: General/Global. Use all available reference data.`;
 
+            const languageMap = {
+                'en': 'English',
+                'ar': 'Arabic',
+                'fr': 'French',
+                'de': 'German'
+            };
+            const languageName = languageMap[selectedLanguage] || 'English';
+
+            const languageInstruction = `**EXPECTED LANGUAGE**: The primary copy in the asset should be in **${languageName}**.
+                - Validate spelling, grammar, and syntax according to ${languageName} language rules.
+                - **IMPORTANT**: Product names, brand names, and technical terms (e.g., "iPhone", "MacBook", "Pro Max") may remain in ENGLISH even in ${languageName} content. This is NORMAL and ACCEPTABLE.
+                - Only flag language issues if descriptive/marketing copy is in the wrong language or has errors.
+                - For Arabic: expect right-to-left text rendering.`;
+
             const systemInstructions = `
         **Role:** ${strictnessInstruction}
         **Goal:** Analyze "Primary Asset" against "Reference Assets".
         
         ${marketInstruction}
+        
+        ${languageInstruction}
 
         **MANDATORY RULES (Override all else):**
         ${feedbackText || "None."}
