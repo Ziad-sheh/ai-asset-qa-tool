@@ -714,7 +714,7 @@
             apiKey = apiKey.trim();
 
             const buildReq = (model) => ({
-                url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+                url: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
                 body: {
                     contents: [{ role: 'user', parts }],
                     generationConfig: {
@@ -724,6 +724,13 @@
                 }
             });
 
+            // Send the API key as a header so it never lands in URLs, browser
+            // history, Referer, or access logs.
+            const authHeaders = {
+                'Content-Type': 'application/json',
+                'x-goog-api-key': apiKey
+            };
+
             const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
             async function fetchWithRetry(url, body, retries = 3) {
@@ -731,7 +738,7 @@
                     try {
                         const response = await fetch(url, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: authHeaders,
                             body: JSON.stringify(body)
                         });
 
@@ -802,7 +809,7 @@
             // We don't retry fallback as aggressively, or maybe we should? Let's do simple fetch for fallback.
             const response = await fetch(req.url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders,
                 body: JSON.stringify(req.body)
             });
 

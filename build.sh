@@ -2,10 +2,6 @@
 set -e
 DIST_DIR="dist"
 rm -rf "$DIST_DIR"
-mkdir -p "$DIST_DIR/src"
+mkdir -p "$DIST_DIR"
 cp index.html "$DIST_DIR/"
-cp -r src "$DIST_DIR/"
-if [ -f firebaseConfig.js ]; then
-  cp firebaseConfig.js "$DIST_DIR/"
-fi
 
